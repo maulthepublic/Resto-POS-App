@@ -1,0 +1,258 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  owner
+  admin
+  cashier
+  chef
+}
+
+enum OrderStatus {
+  draft
+  paid
+  cooking
+  ready
+  served
+  cancelled
+}
+
+enum PaymentMethod {
+  cash
+  static_qris
+  dynamic_qris
+  ewallet
+  debit_credit
+}
+
+enum SyncOperation {
+  insert
+  update
+  delete
+}
+
+enum SyncStatus {
+  pending
+  processing
+  synced
+  failed
+}
+
+enum LedgerType {
+  income
+  expense
+}
+
+model User {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  email          String?          @unique
+  passwordHash   String           @map("password_hash")
+  pinHash        String?          @map("pin_hash")
+  role           UserRole
+  isActive       Boolean          @default(true) @map("is_active")
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  orders         Order[]
+  stockMovements StockMovement[]
+  financeLedgers FinanceLedger[]
+
+  @@map("users")
+}
+
+model Category {
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  sortOrder Int        @default(0) @map("sort_order")
+  isActive  Boolean    @default(true) @map("is_active")
+  updatedAt DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  menuItems MenuItem[]
+
+  @@map("categories")
+}
+
+model MenuItem {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId    String?        @map("category_id") @db.Uuid
+  category      Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  name          String
+  description   String?
+  basePrice     Decimal        @map("base_price") @db.Decimal(14, 2)
+  imageUrl      String?        @map("image_url")
+  isActive      Boolean        @default(true) @map("is_active")
+  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  variantGroups VariantGroup[]
+  recipes       Recipe[]
+  orderItems    OrderItem[]
+
+  @@map("menu_items")
+}
+
+model VariantGroup {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  menuItemId   String    @map("menu_item_id") @db.Uuid
+  menuItem     MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  name         String
+  isRequired   Boolean   @default(false) @map("is_required")
+  maxSelected  Int       @default(1) @map("max_selected")
+  variants     Variant[]
+
+  @@map("variant_groups")
+}
+
+model Variant {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  variantGroupId String       @map("variant_group_id") @db.Uuid
+  variantGroup   VariantGroup @relation(fields: [variantGroupId], references: [id], onDelete: Cascade)
+  name           String
+  priceDelta     Decimal      @default(0) @map("price_delta") @db.Decimal(14, 2)
+  isActive       Boolean      @default(true) @map("is_active")
+
+  @@map("variants")
+}
+
+model Modifier {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  priceDelta Decimal @default(0) @map("price_delta") @db.Decimal(14, 2)
+  isActive   Boolean @default(true) @map("is_active")
+
+  @@map("modifiers")
+}
+
+model RawMaterial {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  unit            String
+  unitCost        Decimal         @default(0) @map("unit_cost") @db.Decimal(14, 2)
+  minimumQuantity Decimal         @default(0) @map("minimum_quantity") @db.Decimal(14, 3)
+  currentQuantity Decimal         @default(0) @map("current_quantity") @db.Decimal(14, 3)
+  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  recipes         Recipe[]
+  stockMovements  StockMovement[]
+
+  @@map("raw_materials")
+}
+
+model Recipe {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  menuItemId    String      @map("menu_item_id") @db.Uuid
+  menuItem      MenuItem    @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  rawMaterialId String      @map("raw_material_id") @db.Uuid
+  rawMaterial   RawMaterial @relation(fields: [rawMaterialId], references: [id], onDelete: Restrict)
+  quantity      Decimal     @db.Decimal(14, 3)
+
+  @@unique([menuItemId, rawMaterialId])
+  @@map("recipes")
+}
+
+model Order {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  deviceId      String          @map("device_id")
+  receiptNumber String          @unique @map("receipt_number")
+  tableNumber   String?         @map("table_number")
+  status        OrderStatus     @default(paid)
+  subtotal      Decimal         @db.Decimal(14, 2)
+  discountTotal Decimal         @default(0) @map("discount_total") @db.Decimal(14, 2)
+  taxTotal      Decimal         @default(0) @map("tax_total") @db.Decimal(14, 2)
+  grandTotal    Decimal         @map("grand_total") @db.Decimal(14, 2)
+  paidAt        DateTime        @map("paid_at") @db.Timestamptz
+  createdBy     String?         @map("created_by") @db.Uuid
+  user          User?           @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  orderItems    OrderItem[]
+  payments      Payment[]
+  stockMovements StockMovement[]
+  financeLedgers FinanceLedger[]
+
+  @@index([paidAt(sort: Desc)])
+  @@map("orders")
+}
+
+model OrderItem {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId           String    @map("order_id") @db.Uuid
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId        String?   @map("menu_item_id") @db.Uuid
+  menuItem          MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  itemName          String    @map("item_name")
+  quantity          Int
+  unitPrice         Decimal   @map("unit_price") @db.Decimal(14, 2)
+  lineTotal         Decimal   @map("line_total") @db.Decimal(14, 2)
+  selectedVariants  Json      @default("[]") @map("selected_variants")
+  selectedModifiers Json      @default("[]") @map("selected_modifiers")
+  kitchenNote       String?   @map("kitchen_note")
+
+  @@map("order_items")
+}
+
+model Payment {
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId           String        @map("order_id") @db.Uuid
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method            PaymentMethod
+  amount            Decimal       @db.Decimal(14, 2)
+  providerReference String?       @map("provider_reference")
+  isOffline         Boolean       @default(false) @map("is_offline")
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([orderId])
+  @@map("payments")
+}
+
+model StockMovement {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rawMaterialId String      @map("raw_material_id") @db.Uuid
+  rawMaterial   RawMaterial @relation(fields: [rawMaterialId], references: [id], onDelete: Cascade)
+  orderId       String?     @map("order_id") @db.Uuid
+  order         Order?      @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  movementType  String      @map("movement_type")
+  quantityDelta Decimal     @map("quantity_delta") @db.Decimal(14, 3)
+  note          String?
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  createdBy     String?     @map("created_by") @db.Uuid
+  user          User?       @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([rawMaterialId, createdAt(sort: Desc)])
+  @@map("stock_movements")
+}
+
+model FinanceLedger {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId       String?       @map("order_id") @db.Uuid
+  order         Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  type          LedgerType
+  category      String
+  amount        Decimal       @db.Decimal(14, 2)
+  paymentMethod PaymentMethod? @map("payment_method")
+  description   String?
+  occurredAt    DateTime      @map("occurred_at") @db.Timestamptz
+  createdBy     String?       @map("created_by") @db.Uuid
+  user          User?         @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([occurredAt(sort: Desc)])
+  @@map("finance_ledger")
+}
+
+model SyncMutation {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  deviceId         String        @map("device_id")
+  idempotencyKey   String        @unique @map("idempotency_key")
+  entityType       String        @map("entity_type")
+  entityId         String?       @map("entity_id") @db.Uuid
+  operation        SyncOperation
+  payload          Json
+  clientCreatedAt  DateTime      @map("client_created_at") @db.Timestamptz
+  serverReceivedAt DateTime      @default(now()) @map("server_received_at") @db.Timestamptz
+  status           SyncStatus    @default(synced)
+
+  @@map("sync_mutations")
+}
