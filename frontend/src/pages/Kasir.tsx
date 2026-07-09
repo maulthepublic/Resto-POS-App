@@ -177,6 +177,23 @@ export function Kasir() {
         createdAt: new Date().toISOString(),
       });
 
+      // 3.1 Save Finance Ledger record for automatically tracking POS sales income
+      const ledgerId = `ledger-${Date.now()}`;
+      const ledgerData = {
+        id: ledgerId,
+        orderId,
+        type: 'income' as const,
+        category: 'Penjualan POS',
+        amount: totals.grandTotal,
+        paymentMethod,
+        description: `Penjualan POS #${receiptNumber} (${tableNumber || 'Meja Umum'})`,
+        occurredAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        createdBy: currentUser?.id || 'unknown',
+        syncStatus: 'pending' as const,
+      };
+      await db.financeLedger.add(ledgerData);
+
       // 4. Record to sync queue (For Offline-First syncing)
       await enqueueMutation('order', orderId, 'insert', {
         order: newOrder,
@@ -196,6 +213,9 @@ export function Kasir() {
           isOffline,
         },
       });
+
+      // 4.1 Enqueue Finance Ledger mutation for server synchronization
+      await enqueueMutation('financeLedger', ledgerId, 'insert', ledgerData);
 
       // Show receipt simulation
       setPrintedReceipt({
@@ -217,6 +237,99 @@ export function Kasir() {
     } catch (err) {
       console.error(err);
       alert('Gagal memproses transaksi.');
+    }
+  };
+
+  const handlePrintReceipt = () => {
+    if (!printedReceipt) return;
+    const printWindow = window.open('', '_blank', 'width=350,height=600');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Cetak Struk - Resto POS</title>
+            <style>
+              body {
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                color: #000;
+                padding: 10px;
+                width: 280px;
+                margin: 0;
+              }
+              .center { text-align: center; }
+              .bold { font-weight: bold; }
+              .dashed-line { border-bottom: 1px dashed #000; margin: 8px 0; }
+              .flex-between { display: flex; justify-content: space-between; }
+              .text-right { text-align: right; }
+              @media print {
+                @page { margin: 0; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="center bold" style="font-size: 14px; margin-bottom: 4px;">RESTO POS APP v1.1</div>
+            <div class="center" style="margin-bottom: 8px;">
+              Ruko Kuliner Nusantara No. 12<br>Tangerang, Indonesia
+            </div>
+            <div>
+              No: ${printedReceipt.receiptNumber}<br>
+              Meja: ${printedReceipt.tableNumber}<br>
+              Waktu: ${printedReceipt.date} ${printedReceipt.time}
+            </div>
+            <div class="dashed-line"></div>
+            
+            ${printedReceipt.items.map((item: any) => `
+              <div style="margin-bottom: 6px;">
+                <div class="flex-between">
+                  <span>${item.menuItem.name}</span>
+                  <span>${item.quantity}x</span>
+                </div>
+                ${item.selectedVariants.map((v: any) => `<div style="font-size: 10px; color: #555;">- ${v.name}</div>`).join('')}
+                ${item.selectedModifiers.map((m: any) => `<div style="font-size: 10px; color: #555;">- ${m.name} (+${formatCurrency(Number(m.priceDelta))})</div>`).join('')}
+                <div class="text-right bold">${formatCurrency(item.lineTotal)}</div>
+              </div>
+            `).join('')}
+
+            <div class="dashed-line"></div>
+            <div class="flex-between">
+              <span>Subtotal:</span>
+              <span>${formatCurrency(printedReceipt.totals.subtotal)}</span>
+            </div>
+            <div class="flex-between">
+              <span>Diskon:</span>
+              <span>-${formatCurrency(printedReceipt.totals.discountTotal)}</span>
+            </div>
+            <div class="flex-between">
+              <span>Pajak (10%):</span>
+              <span>${formatCurrency(printedReceipt.totals.taxTotal)}</span>
+            </div>
+            <div class="flex-between bold" style="font-size: 13px; margin: 4px 0;">
+              <span>TOTAL AKHIR:</span>
+              <span>${formatCurrency(printedReceipt.totals.grandTotal)}</span>
+            </div>
+            <div class="flex-between">
+              <span>Bayar (${printedReceipt.paymentMethod.toUpperCase()}):</span>
+              <span>${formatCurrency(printedReceipt.cashPaid)}</span>
+            </div>
+            ${printedReceipt.paymentMethod === 'cash' ? `
+              <div class="flex-between bold">
+                <span>Kembalian:</span>
+                <span>${formatCurrency(printedReceipt.cashPaid - printedReceipt.totals.grandTotal)}</span>
+              </div>
+            ` : ''}
+            <div class="dashed-line"></div>
+            <div class="center" style="font-style: italic; margin-top: 8px;">Terima Kasih atas Kunjungan Anda!</div>
+            <script>
+              window.onload = function() {
+                window.print();
+                setTimeout(function() { window.close(); }, 500);
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
     }
   };
 
@@ -860,23 +973,40 @@ export function Kasir() {
               Terima Kasih atas Kunjungan Anda!
             </div>
             
-            <button
-              onClick={() => setPrintedReceipt(null)}
-              style={{
-                marginTop: '16px',
-                width: '100%',
-                background: '#333333',
-                color: '#ffffff',
-                border: 'none',
-                padding: '10px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontFamily: 'sans-serif',
-                fontWeight: '600',
-              }}
-            >
-              Tutup Struk
-            </button>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+              <button
+                onClick={handlePrintReceipt}
+                style={{
+                  flex: 1,
+                  background: '#10b981',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '10px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontFamily: 'sans-serif',
+                  fontWeight: '600',
+                }}
+              >
+                Cetak Struk
+              </button>
+              <button
+                onClick={() => setPrintedReceipt(null)}
+                style={{
+                  flex: 1,
+                  background: '#374151',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '10px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontFamily: 'sans-serif',
+                  fontWeight: '600',
+                }}
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}

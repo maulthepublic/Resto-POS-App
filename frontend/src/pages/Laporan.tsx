@@ -25,7 +25,11 @@ export function Laporan() {
       minDate.setMonth(now.getMonth() - 1);
     }
 
-    const filteredOrders = orders.filter((o) => new Date(o.createdAt) >= minDate && o.status === 'paid');
+    const filteredOrders = orders.filter(
+      (o) =>
+        new Date(o.createdAt) >= minDate &&
+        ['paid', 'cooking', 'ready', 'served'].includes(o.status)
+    );
     
     // Revenue calculations
     const grossSales = filteredOrders.reduce((sum, o) => sum + Number(o.grandTotal), 0);
@@ -60,7 +64,11 @@ export function Laporan() {
     };
     payments.forEach((p) => {
       const o = orders.find((ord) => ord.id === p.orderId);
-      if (o && new Date(o.createdAt) >= minDate && o.status === 'paid') {
+      if (
+        o &&
+        new Date(o.createdAt) >= minDate &&
+        ['paid', 'cooking', 'ready', 'served'].includes(o.status)
+      ) {
         paymentMethods[p.method] = (paymentMethods[p.method] || 0) + Number(p.amount);
       }
     });
@@ -91,8 +99,71 @@ export function Laporan() {
     }).format(val);
   };
 
-  const handleExport = () => {
-    alert('Simulasi ekspor laporan berhasil! Berkas PDF / Spreadsheet siap diunduh.');
+  const handleExport = async () => {
+    if (!reportData) {
+      alert('Data laporan belum siap.');
+      return;
+    }
+    try {
+      const orders = await db.orders.toArray();
+      const payments = await db.payments.toArray();
+
+      const now = new Date();
+      let minDate = new Date();
+      minDate.setHours(0, 0, 0, 0);
+
+      if (filterRange === 'week') {
+        minDate.setDate(now.getDate() - 7);
+      } else if (filterRange === 'month') {
+        minDate.setMonth(now.getMonth() - 1);
+      }
+
+      const activeOrders = orders.filter(
+        (o) =>
+          new Date(o.createdAt) >= minDate &&
+          ['paid', 'cooking', 'ready', 'served'].includes(o.status)
+      );
+
+      let csvContent = '\uFEFF'; // Add UTF-8 BOM so Excel opens it with correct encoding
+      csvContent += 'LAPORAN REKAPITULASI PENJUALAN RESTO\n';
+      csvContent += `Periode;${filterRange === 'today' ? 'Hari Ini' : filterRange === 'week' ? '7 Hari Terakhir' : '30 Hari Terakhir'}\n`;
+      csvContent += `Tanggal Cetak;${new Date().toLocaleString('id-ID')}\n\n`;
+
+      csvContent += 'RINGKASAN KINERJA\n';
+      csvContent += `Total Transaksi;${reportData.ordersCount}\n`;
+      csvContent += `Pendapatan Kotor;${formatCurrency(reportData.grossSales)}\n`;
+      csvContent += `Total HPP Bahan Baku;${formatCurrency(reportData.totalHpp)}\n`;
+      csvContent += `Biaya Operasional (Petty Cash);${formatCurrency(reportData.manualExpenses)}\n`;
+      csvContent += `Estimasi Keuntungan Bersih;${formatCurrency(reportData.netProfitMargin)}\n\n`;
+
+      csvContent += 'PEMBAGIAN PEMBAYARAN\n';
+      csvContent += `Tunai (Cash);${formatCurrency(reportData.paymentMethods.cash)}\n`;
+      csvContent += `QRIS Statis;${formatCurrency(reportData.paymentMethods.static_qris)}\n`;
+      csvContent += `QRIS Dinamis;${formatCurrency(reportData.paymentMethods.dynamic_qris)}\n`;
+      csvContent += `Lain-lain / Kartu;${formatCurrency(reportData.paymentMethods.ewallet + reportData.paymentMethods.debit_credit)}\n\n`;
+
+      csvContent += 'DAFTAR DETAIL TRANSAKSI\n';
+      csvContent += 'Tanggal/Waktu;Nomor Resi;Meja;Status Pesanan;Total Pembayaran;Metode\n';
+
+      activeOrders.forEach((o) => {
+        const pay = payments.find((p) => p.orderId === o.id);
+        const tDate = new Date(o.createdAt).toLocaleString('id-ID');
+        csvContent += `${tDate};${o.receiptNumber};${o.tableNumber || 'Meja Umum'};${o.status.toUpperCase()};${o.grandTotal};${pay ? pay.method.toUpperCase() : 'CASH'}\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Laporan_ZReport_${filterRange}_${Date.now()}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error(err);
+      alert('Gagal membuat ekspor laporan.');
+    }
   };
 
   if (!reportData) return <div style={{ color: 'var(--text-muted)' }}>Memuat laporan...</div>;

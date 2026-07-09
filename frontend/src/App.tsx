@@ -8,7 +8,6 @@ import { db } from './db/localSchema';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Kasir } from './pages/Kasir';
-import { MenuResep } from './pages/MenuResep';
 import { Keuangan } from './pages/Keuangan';
 import { Kds } from './pages/Kds';
 import { Laporan } from './pages/Laporan';
@@ -78,11 +77,10 @@ function App() {
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', allowedRoles: ['owner', 'admin'] },
     { id: 'kasir', label: 'Kasir (POS)', allowedRoles: ['owner', 'admin', 'cashier'] },
-    { id: 'menu', label: 'Menu & Resep', allowedRoles: ['owner', 'admin'] },
     { id: 'keuangan', label: 'Keuangan', allowedRoles: ['owner'] },
     { id: 'dapur', label: 'Dapur (KDS)', allowedRoles: ['owner', 'admin', 'chef'] },
     { id: 'laporan', label: 'Laporan', allowedRoles: ['owner', 'admin'] },
-    { id: 'cms', label: 'Admin CMS', allowedRoles: ['owner', 'admin'] },
+    { id: 'cms', label: 'Admin Panel', allowedRoles: ['owner', 'admin'] },
   ].filter((item) => item.allowedRoles.includes(currentUser.role));
 
   const renderActivePage = () => {
@@ -91,8 +89,6 @@ function App() {
         return <Dashboard onNavigateToKasir={() => setActiveTab('kasir')} />;
       case 'kasir':
         return <Kasir />;
-      case 'menu':
-        return <MenuResep />;
       case 'keuangan':
         return <Keuangan />;
       case 'dapur':
@@ -212,7 +208,7 @@ function App() {
         >
           {/* Left: Active Module Name */}
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '20px', textTransform: 'capitalize' }}>
-            {activeTab === 'menu' ? 'Menu & Resep' : activeTab === 'dapur' ? 'Dapur (KDS)' : activeTab === 'cms' ? 'Admin CMS' : activeTab}
+            {activeTab === 'dapur' ? 'Dapur (KDS)' : activeTab === 'cms' ? 'Admin Panel' : activeTab}
           </h2>
 
           {/* Right: Network status simulator and sync queue count */}
