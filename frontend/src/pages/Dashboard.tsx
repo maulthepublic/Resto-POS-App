@@ -12,7 +12,11 @@ export function Dashboard({ onNavigateToKasir }: DashboardProps) {
     today.setHours(0, 0, 0, 0);
 
     const orders = await db.orders.toArray();
-    const todayOrders = orders.filter((o) => new Date(o.createdAt) >= today && o.status === 'paid');
+    const todayOrders = orders.filter(
+      (o) =>
+        new Date(o.createdAt) >= today &&
+        ['paid', 'cooking', 'ready', 'served'].includes(o.status)
+    );
 
     const subtotalSales = todayOrders.reduce((sum, o) => sum + Number(o.grandTotal), 0);
     const receiptCount = todayOrders.length;
@@ -21,7 +25,11 @@ export function Dashboard({ onNavigateToKasir }: DashboardProps) {
     const payments = await db.payments.toArray();
     const todayPayments = payments.filter((p) => {
       const o = orders.find((ord) => ord.id === p.orderId);
-      return o && new Date(o.createdAt) >= today && o.status === 'paid';
+      return (
+        o &&
+        new Date(o.createdAt) >= today &&
+        ['paid', 'cooking', 'ready', 'served'].includes(o.status)
+      );
     });
 
     const paymentMethodsMap: Record<string, number> = {};
@@ -31,15 +39,44 @@ export function Dashboard({ onNavigateToKasir }: DashboardProps) {
 
     // Formulate recent orders
     const recent = orders
-      .filter((o) => o.status === 'paid')
+      .filter((o) => ['paid', 'cooking', 'ready', 'served'].includes(o.status))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .slice(0, 5);
+
+    // Calculate hourly slots for dynamic chart representation
+    const timeSlots = [
+      { label: '08:00', hourStart: 8, hourEnd: 10, total: 0 },
+      { label: '10:00', hourStart: 10, hourEnd: 12, total: 0 },
+      { label: '12:00', hourStart: 12, hourEnd: 14, total: 0 },
+      { label: '14:00', hourStart: 14, hourEnd: 16, total: 0 },
+      { label: '16:00', hourStart: 16, hourEnd: 18, total: 0 },
+      { label: '18:00', hourStart: 18, hourEnd: 20, total: 0 },
+      { label: '20:00', hourStart: 20, hourEnd: 22, total: 0 },
+      { label: '22:00', hourStart: 22, hourEnd: 24, total: 0 },
+    ];
+
+    todayOrders.forEach((o) => {
+      const orderDate = new Date(o.createdAt);
+      const hour = orderDate.getHours();
+      const slot = timeSlots.find((s) => hour >= s.hourStart && hour < s.hourEnd);
+      if (slot) {
+        slot.total += Number(o.grandTotal);
+      }
+    });
+
+    const maxTotal = Math.max(...timeSlots.map((s) => s.total), 1);
+    const chartData = timeSlots.map((s) => ({
+      label: s.label,
+      val: s.total > 0 ? (s.total / maxTotal) * 100 : 5, // minimum 5% to show empty bars elegantly
+      amount: s.total,
+    }));
 
     return {
       totalRevenue: subtotalSales,
       receipts: receiptCount,
       paymentMethods: paymentMethodsMap,
       recentOrders: recent,
+      chartData,
     };
   }, []);
 
@@ -198,33 +235,35 @@ export function Dashboard({ onNavigateToKasir }: DashboardProps) {
             }}
           >
             {/* Hour points representation using SVG or styled divs */}
-            {[
-              { label: '08:00', val: 10 },
-              { label: '10:00', val: 30 },
-              { label: '12:00', val: 90 }, // Peak lunch hour
-              { label: '14:00', val: 40 },
-              { label: '16:00', val: 25 },
-              { label: '18:00', val: 75 }, // Dinner hour
-              { label: '20:00', val: 95 }, // Peak dinner
-              { label: '22:00', val: 15 },
-            ].map((pt, idx) => (
+            {(stats?.chartData || [
+              { label: '08:00', val: 5, amount: 0 },
+              { label: '10:00', val: 5, amount: 0 },
+              { label: '12:00', val: 5, amount: 0 },
+              { label: '14:00', val: 5, amount: 0 },
+              { label: '16:00', val: 5, amount: 0 },
+              { label: '18:00', val: 5, amount: 0 },
+              { label: '20:00', val: 5, amount: 0 },
+              { label: '22:00', val: 5, amount: 0 },
+            ]).map((pt, idx) => (
               <div
                 key={idx}
+                title={pt.amount > 0 ? `Penjualan: ${formatCurrency(pt.amount)}` : 'Tidak ada penjualan'}
                 style={{
                   flex: 1,
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '8px',
+                  cursor: 'pointer',
                 }}
               >
                 <div
                   style={{
                     width: '100%',
-                    backgroundColor: 'var(--primary)',
+                    backgroundColor: pt.amount > 0 ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
                     height: `${pt.val}%`,
                     borderRadius: '4px 4px 0 0',
-                    boxShadow: '0 4px 10px var(--primary-glow)',
+                    boxShadow: pt.amount > 0 ? '0 4px 10px var(--primary-glow)' : 'none',
                     transition: 'height 0.5s ease',
                   }}
                 />
