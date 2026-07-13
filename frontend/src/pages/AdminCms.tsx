@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/localSchema';
 import { useNetworkStore } from '../store/networkStore';
+import { useAuthStore } from '../store/authStore';
 
 export function AdminCms() {
   const [activeTab, setActiveTab] = useState<'users' | 'menu' | 'categories' | 'variants' | 'modifiers' | 'materials' | 'recipes' | 'hpp'>('users');
   const { enqueueMutation } = useNetworkStore();
+  const { updatePin } = useAuthStore();
 
   // ─── Shared Dexie Queries ───
   const users = useLiveQuery(() => db.users.toArray()) || [];
@@ -72,11 +74,22 @@ export function AdminCms() {
         await db.users.add(userData);
       }
 
-      if (userPin.trim()) {
-        await db.appSettings.put({ key: `pin:${uId}`, value: userPin });
-      }
+      // Enqueue user metadata (name, role, isActive) via sync queue — PIN is intentionally excluded.
+      await enqueueMutation('user', uId, editingUserId ? 'update' : 'insert', { user: userData });
 
-      await enqueueMutation('rawMaterial', uId, editingUserId ? 'update' : 'insert', { user: userData, pin: userPin });
+      // PIN update goes through a dedicated secure endpoint, never via sync queue.
+      // The backend is responsible for bcrypt hashing before persisting.
+      if (userPin.trim()) {
+        // Client-side guard: mirror the backend's minimum-4-digit rule to avoid a pointless round-trip.
+        if (userPin.trim().length < 4) {
+          alert('PIN harus terdiri dari minimal 4 digit.');
+          return;
+        }
+        const result = await updatePin(uId, userPin.trim());
+        if (!result.ok) {
+          alert(`Data user disimpan, tapi PIN gagal diperbarui: ${result.message}`);
+        }
+      }
 
       setShowUserForm(false);
       setEditingUserId(null);
@@ -95,8 +108,9 @@ export function AdminCms() {
     setUserName(user.name);
     setUserRole(user.role);
     setUserStatus(user.isActive);
-    const pin = appSettings.find((s) => s.key === `pin:${user.id}`);
-    setUserPin(pin ? (pin.value as string) : '');
+    // Never pre-fill the existing PIN — show blank so the admin must actively choose a new one.
+    // The current PIN remains in effect if the field is left empty.
+    setUserPin('');
     setShowUserForm(true);
   };
 
@@ -177,7 +191,7 @@ export function AdminCms() {
         await db.categories.add(catData);
       }
 
-      await enqueueMutation('rawMaterial', cId, editingCategoryId ? 'update' : 'insert', { category: catData });
+      await enqueueMutation('category', cId, editingCategoryId ? 'update' : 'insert', { category: catData });
 
       setShowCategoryForm(false);
       setEditingCategoryId(null);
@@ -198,7 +212,7 @@ export function AdminCms() {
   const handleDeleteCategory = async (id: string) => {
     if (confirm('Hapus kategori ini?')) {
       await db.categories.delete(id);
-      await enqueueMutation('rawMaterial', id, 'delete', {});
+      await enqueueMutation('category', id, 'delete', {});
     }
   };
 
@@ -207,25 +221,35 @@ export function AdminCms() {
   const [vgMenuId, setVgMenuId] = useState('');
   const [vgName, setVgName] = useState('');
   const [vgRequired, setVgRequired] = useState(false);
+  const [editingVgId, setEditingVgId] = useState<string | null>(null);
   
   const [showVariantForm, setShowVariantForm] = useState(false);
   const [varGroupId, setVarGroupId] = useState('');
   const [varName, setVarName] = useState('');
   const [varPriceDelta, setVarPriceDelta] = useState('');
+  const [editingVarId, setEditingVarId] = useState<string | null>(null);
 
   const handleSaveVariantGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!vgMenuId || !vgName) return;
     try {
-      const id = `vg-${Date.now()}`;
-      await db.variantGroups.add({
+      const id = editingVgId || `vg-${Date.now()}`;
+      const vgData = {
         id,
         menuItemId: vgMenuId,
         name: vgName,
         isRequired: vgRequired,
         maxSelected: 1,
-      });
+      };
+      if (editingVgId) {
+        await db.variantGroups.put(vgData);
+        await enqueueMutation('variantGroup', id, 'update', vgData);
+      } else {
+        await db.variantGroups.add(vgData);
+        await enqueueMutation('variantGroup', id, 'insert', vgData);
+      }
       setShowVariantGroupForm(false);
+      setEditingVgId(null);
       setVgMenuId('');
       setVgName('');
       setVgRequired(false);
@@ -234,19 +258,35 @@ export function AdminCms() {
     }
   };
 
+  const triggerEditVariantGroup = (vg: any) => {
+    setEditingVgId(vg.id);
+    setVgMenuId(vg.menuItemId);
+    setVgName(vg.name);
+    setVgRequired(vg.isRequired);
+    setShowVariantGroupForm(true);
+  };
+
   const handleSaveVariant = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!varGroupId || !varName) return;
     try {
-      const id = `var-${Date.now()}`;
-      await db.variants.add({
+      const id = editingVarId || `var-${Date.now()}`;
+      const varData = {
         id,
         variantGroupId: varGroupId,
         name: varName,
         priceDelta: Number(varPriceDelta || 0),
         isActive: true,
-      });
+      };
+      if (editingVarId) {
+        await db.variants.put(varData);
+        await enqueueMutation('variant', id, 'update', varData);
+      } else {
+        await db.variants.add(varData);
+        await enqueueMutation('variant', id, 'insert', varData);
+      }
       setShowVariantForm(false);
+      setEditingVarId(null);
       setVarGroupId('');
       setVarName('');
       setVarPriceDelta('');
@@ -255,19 +295,31 @@ export function AdminCms() {
     }
   };
 
+  const triggerEditVariant = (v: any) => {
+    setEditingVarId(v.id);
+    setVarGroupId(v.variantGroupId);
+    setVarName(v.name);
+    setVarPriceDelta(String(v.priceDelta));
+    setShowVariantForm(true);
+  };
+
   const handleDeleteVariantGroup = async (id: string) => {
     if (confirm('Hapus group variasi ini beserta seluruh pilihannya?')) {
-      await db.variantGroups.delete(id);
+      // Collect child variants before deleting them locally so we can enqueue each deletion.
       const childs = await db.variants.where('variantGroupId').equals(id).toArray();
       for (const c of childs) {
         await db.variants.delete(c.id);
+        await enqueueMutation('variant', c.id, 'delete', { id: c.id });
       }
+      await db.variantGroups.delete(id);
+      await enqueueMutation('variantGroup', id, 'delete', { id });
     }
   };
 
   const handleDeleteVariant = async (id: string) => {
     if (confirm('Hapus pilihan variasi ini?')) {
       await db.variants.delete(id);
+      await enqueueMutation('variant', id, 'delete', { id });
     }
   };
 
@@ -295,7 +347,7 @@ export function AdminCms() {
         await db.modifiers.add(modData);
       }
 
-      await enqueueMutation('rawMaterial', mId, editingModifierId ? 'update' : 'insert', { modifier: modData });
+      await enqueueMutation('modifier', mId, editingModifierId ? 'update' : 'insert', { modifier: modData });
 
       setShowModifierForm(false);
       setEditingModifierId(null);
@@ -316,7 +368,7 @@ export function AdminCms() {
   const handleDeleteModifier = async (id: string) => {
     if (confirm('Hapus modifier/tambahan ini?')) {
       await db.modifiers.delete(id);
-      await enqueueMutation('rawMaterial', id, 'delete', {});
+      await enqueueMutation('modifier', id, 'delete', {});
     }
   };
 
@@ -418,38 +470,47 @@ export function AdminCms() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="page-shell page-admin" style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
       
       {/* CMS Navigation Tabs Bar */}
-      <div style={{ display: 'flex', gap: '6px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', flexWrap: 'wrap' }}>
-        {[
-          { id: 'users', label: '1. User & PIN' },
-          { id: 'menu', label: '2. Menu Produk' },
-          { id: 'categories', label: '3. Kategori Menu' },
-          { id: 'variants', label: '4. Opsi Variasi' },
-          { id: 'modifiers', label: '5. Modifier / Topping' },
-          { id: 'materials', label: '6. Bahan Baku' },
-          { id: 'recipes', label: '7. Resep (BOM)' },
-          { id: 'hpp', label: '8. HPP & Margin' },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            style={{
-              background: activeTab === tab.id ? 'var(--primary)' : 'transparent',
-              color: activeTab === tab.id ? 'var(--text-primary)' : 'var(--text-secondary)',
-              border: 'none',
-              padding: '10px 14px',
-              borderRadius: 'var(--radius-sm)',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: activeTab === tab.id ? '600' : '400',
-              transition: 'all var(--transition-fast)',
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '8px' }}>
+        <div 
+          className="tab-island" 
+          style={{ 
+            borderRadius: '16px', 
+            padding: '6px', 
+            flexWrap: 'wrap',
+            gap: '6px',
+            width: '100%',
+            justifyContent: 'center',
+          }}
+        >
+          {[
+            { id: 'users', label: 'User & PIN' },
+            { id: 'menu', label: 'Menu Produk' },
+            { id: 'categories', label: 'Kategori Menu' },
+            { id: 'variants', label: 'Opsi Variasi' },
+            { id: 'modifiers', label: 'Modifier / Topping' },
+            { id: 'materials', label: 'Bahan Baku' },
+            { id: 'recipes', label: 'Resep (BOM)' },
+            { id: 'hpp', label: 'HPP & Margin' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`tab-island-btn ${activeTab === tab.id ? 'active' : ''}`}
+              style={{
+                borderRadius: '10px',
+                padding: '8px 16px',
+                fontSize: '12.5px',
+                flex: '1 1 auto',
+                textAlign: 'center',
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ─── TAB 1: USERS ─── */}
@@ -494,7 +555,14 @@ export function AdminCms() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <label style={{ fontSize: '13px' }}>PIN Login (4 Digit Angka)</label>
-                  <input type="text" maxLength={4} placeholder="PIN baru" value={userPin} onChange={(e) => setUserPin(e.target.value.replace(/\D/g, ''))} style={{ background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '10px', borderRadius: '4px' }} />
+                  <input
+                    type="text"
+                    maxLength={4}
+                    placeholder={editingUserId ? 'Kosongkan untuk tetap pakai PIN saat ini' : 'PIN baru (4 digit)'}
+                    value={userPin}
+                    onChange={(e) => setUserPin(e.target.value.replace(/\D/g, ''))}
+                    style={{ background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '10px', borderRadius: '4px' }}
+                  />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <label style={{ fontSize: '13px' }}>Status Akun</label>
@@ -511,7 +579,7 @@ export function AdminCms() {
             </div>
           )}
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <table className="table-premium" style={{ width: '100%' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '13px' }}>
                 <th style={{ padding: '12px 8px' }}>Nama</th>
@@ -594,7 +662,7 @@ export function AdminCms() {
             </div>
           )}
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <table className="table-premium" style={{ width: '100%' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '13px' }}>
                 <th style={{ padding: '12px 8px' }}>Nama Menu</th>
@@ -676,7 +744,7 @@ export function AdminCms() {
             </div>
           )}
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <table className="table-premium" style={{ width: '100%' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '13px' }}>
                 <th style={{ padding: '12px 8px' }}>Kategori</th>
@@ -708,11 +776,12 @@ export function AdminCms() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3>Group Pilihan Variasi</h3>
-              <button onClick={() => setShowVariantGroupForm(true)} style={{ background: 'var(--primary)', color: 'var(--text-primary)', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>+ Group Baru</button>
+              <button onClick={() => { setShowVariantGroupForm(true); setEditingVgId(null); setVgMenuId(''); setVgName(''); setVgRequired(false); }} style={{ background: 'var(--primary)', color: 'var(--text-primary)', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>+ Group Baru</button>
             </div>
 
             {showVariantGroupForm && (
               <form onSubmit={handleSaveVariantGroup} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <h4 style={{ margin: 0 }}>{editingVgId ? 'Edit Group Variasi' : 'Tambah Group Variasi'}</h4>
                 <select required value={vgMenuId} onChange={(e) => setVgMenuId(e.target.value)} style={{ background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px', borderRadius: '4px' }}>
                   <option value="">Pilih Menu Hubungan</option>
                   {menuItems.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -723,13 +792,13 @@ export function AdminCms() {
                   Wajib Dipilih Konsumen (Required)
                 </label>
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                  <button type="button" onClick={() => setShowVariantGroupForm(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)' }}>Batal</button>
-                  <button type="submit" style={{ background: 'var(--primary)', color: 'var(--text-primary)', border: 'none', padding: '6px 12px', borderRadius: '4px' }}>Simpan Group</button>
+                  <button type="button" onClick={() => { setShowVariantGroupForm(false); setEditingVgId(null); setVgMenuId(''); setVgName(''); setVgRequired(false); }} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)' }}>Batal</button>
+                  <button type="submit" style={{ background: 'var(--primary)', color: 'var(--text-primary)', border: 'none', padding: '6px 12px', borderRadius: '4px' }}>{editingVgId ? 'Simpan Perubahan' : 'Simpan Group'}</button>
                 </div>
               </form>
             )}
 
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+            <table className="table-premium" style={{ width: '100%' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
                   <th style={{ padding: '8px' }}>Nama Group</th>
@@ -747,6 +816,7 @@ export function AdminCms() {
                       <td style={{ padding: '8px' }}>{m ? m.name : 'Unknown Menu'}</td>
                       <td style={{ padding: '8px', color: vg.isRequired ? 'var(--danger)' : 'var(--text-muted)' }}>{vg.isRequired ? 'WAJIB' : 'OPSIONAL'}</td>
                       <td style={{ padding: '8px', textAlign: 'right' }}>
+                        <button onClick={() => triggerEditVariantGroup(vg)} style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', marginRight: '12px' }}>Edit</button>
                         <button onClick={() => handleDeleteVariantGroup(vg.id)} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}>Hapus</button>
                       </td>
                     </tr>
@@ -760,11 +830,12 @@ export function AdminCms() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3>Pilihan Variasi (Variants)</h3>
-              <button onClick={() => setShowVariantForm(true)} style={{ background: 'var(--primary)', color: 'var(--text-primary)', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>+ Opsi Pilihan</button>
+              <button onClick={() => { setShowVariantForm(true); setEditingVarId(null); setVarGroupId(''); setVarName(''); setVarPriceDelta(''); }} style={{ background: 'var(--primary)', color: 'var(--text-primary)', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>+ Opsi Pilihan</button>
             </div>
 
             {showVariantForm && (
               <form onSubmit={handleSaveVariant} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <h4 style={{ margin: 0 }}>{editingVarId ? 'Edit Pilihan Variasi' : 'Tambah Pilihan Variasi'}</h4>
                 <select required value={varGroupId} onChange={(e) => setVarGroupId(e.target.value)} style={{ background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px', borderRadius: '4px' }}>
                   <option value="">Pilih Variant Group</option>
                   {variantGroups.map((g) => {
@@ -777,13 +848,13 @@ export function AdminCms() {
                   <input type="number" placeholder="Selisih Harga (Delta Rp)" value={varPriceDelta} onChange={(e) => setVarPriceDelta(e.target.value)} style={{ background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px', borderRadius: '4px' }} />
                 </div>
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                  <button type="button" onClick={() => setShowVariantForm(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)' }}>Batal</button>
-                  <button type="submit" style={{ background: 'var(--primary)', color: 'var(--text-primary)', border: 'none', padding: '6px 12px', borderRadius: '4px' }}>Simpan Pilihan</button>
+                  <button type="button" onClick={() => { setShowVariantForm(false); setEditingVarId(null); setVarGroupId(''); setVarName(''); setVarPriceDelta(''); }} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)' }}>Batal</button>
+                  <button type="submit" style={{ background: 'var(--primary)', color: 'var(--text-primary)', border: 'none', padding: '6px 12px', borderRadius: '4px' }}>{editingVarId ? 'Simpan Perubahan' : 'Simpan Pilihan'}</button>
                 </div>
               </form>
             )}
 
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+            <table className="table-premium" style={{ width: '100%' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
                   <th style={{ padding: '8px' }}>Opsi Pilihan</th>
@@ -801,6 +872,7 @@ export function AdminCms() {
                       <td style={{ padding: '8px' }}>{g ? g.name : 'Unknown Group'}</td>
                       <td style={{ padding: '8px', color: 'var(--primary)' }}>{Number(v.priceDelta) >= 0 ? '+' : ''}{formatCurrency(v.priceDelta)}</td>
                       <td style={{ padding: '8px', textAlign: 'right' }}>
+                        <button onClick={() => triggerEditVariant(v)} style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', marginRight: '12px' }}>Edit</button>
                         <button onClick={() => handleDeleteVariant(v.id)} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}>Hapus</button>
                       </td>
                     </tr>
@@ -851,7 +923,7 @@ export function AdminCms() {
             </div>
           )}
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <table className="table-premium" style={{ width: '100%' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '13px' }}>
                 <th style={{ padding: '12px 8px' }}>Nama Topping / Modifier</th>
@@ -931,7 +1003,7 @@ export function AdminCms() {
             </div>
           )}
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <table className="table-premium" style={{ width: '100%' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '13px' }}>
                 <th style={{ padding: '12px 8px' }}>Bahan</th>
@@ -1021,7 +1093,7 @@ export function AdminCms() {
             </div>
           )}
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <table className="table-premium" style={{ width: '100%' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '13px' }}>
                 <th style={{ padding: '12px 8px' }}>Menu Makanan/Minuman</th>
@@ -1058,7 +1130,7 @@ export function AdminCms() {
             <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Proyeksi laba kotor dihitung real-time berdasarkan total biaya bahan baku resep dikalikan harga beli gudang terbaru.</p>
           </div>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <table className="table-premium" style={{ width: '100%' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '13px' }}>
                 <th style={{ padding: '12px 8px' }}>Nama Menu</th>

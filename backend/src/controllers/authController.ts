@@ -93,4 +93,19 @@ export const authController = {
       next(err);
     }
   },
+
+  // PATCH /api/auth/users/:id/set-pin
+  async setPin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { pin } = req.body;
+      if (!pin || typeof pin !== 'string') {
+        return res.status(400).json({ success: false, message: 'pin wajib diisi dan harus berupa string.' });
+      }
+      const result = await authService.setPin(id, pin);
+      return res.status(200).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  },
 };

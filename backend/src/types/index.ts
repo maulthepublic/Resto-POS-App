@@ -33,7 +33,11 @@ export interface SyncMutationItem {
     | 'menuItem'
     | 'rawMaterial'
     | 'category'
-    | 'recipe';
+    | 'recipe'
+    | 'user'
+    | 'modifier'
+    | 'variantGroup'
+    | 'variant';
   entityId: string;
   operation: SyncOperation;
   payload: Record<string, unknown>;

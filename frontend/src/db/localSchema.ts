@@ -138,7 +138,7 @@ export interface LocalSyncQueueItem {
   localSequence?: number;
   idempotencyKey: string;
   deviceId: string;
-  entityType: 'order' | 'stockMovement' | 'financeLedger' | 'menuItem' | 'rawMaterial';
+  entityType: 'order' | 'stockMovement' | 'financeLedger' | 'menuItem' | 'rawMaterial' | 'recipe' | 'user' | 'category' | 'modifier' | 'variantGroup' | 'variant';
   entityId: string;
   operation: 'insert' | 'update' | 'delete';
   payload: unknown;

@@ -89,116 +89,140 @@ export function Dashboard({ onNavigateToKasir }: DashboardProps) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-      {/* Overview Cards */}
+    <div className="page-shell page-dashboard" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+
+      {/* Bento Grid: Overview Cards */}
       <div
+        className="bento-grid"
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gridTemplateColumns: 'repeat(12, 1fr)',
           gap: '24px',
         }}
       >
-        {/* Card Revenue */}
+        {/* Card Revenue - Bento span 5 */}
         <div
+          className="bezel-outer interactive"
           style={{
-            background: 'var(--bg-glass)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--radius-md)',
-            padding: '24px',
-            boxShadow: 'var(--shadow-sm)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
+            gridColumn: 'span 5',
           }}
         >
-          <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-            Pendapatan Hari Ini
-          </span>
-          <h2
+          <div
+            className="bezel-inner"
             style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '32px',
-              color: 'var(--success)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: '12px',
+              minHeight: '160px',
             }}
           >
-            {formatCurrency(stats?.totalRevenue || 0)}
-          </h2>
-          <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
-            Terhitung dari transaksi lokal sukses hari ini
-          </span>
-        </div>
-
-        {/* Card Receipts */}
-        <div
-          style={{
-            background: 'var(--bg-glass)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--radius-md)',
-            padding: '24px',
-            boxShadow: 'var(--shadow-sm)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-          }}
-        >
-          <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-            Jumlah Struk Tercetak
-          </span>
-          <h2
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '32px',
-              color: 'var(--primary)',
-            }}
-          >
-            {stats?.receipts || 0} Struk
-          </h2>
-          <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
-            Total pesanan berhasil diproses hari ini
-          </span>
-        </div>
-
-        {/* Quick Access Card */}
-        <div
-          style={{
-            background: 'linear-gradient(135deg, var(--bg-card), var(--primary-glow))',
-            border: '1px solid var(--primary)',
-            borderRadius: 'var(--radius-md)',
-            padding: '24px',
-            boxShadow: 'var(--shadow-sm)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: '16px',
-          }}
-        >
-          <div>
-            <h3 style={{ fontSize: '18px', marginBottom: '4px' }}>
-              Akses Kasir Cepat
-            </h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
-              Mulai mencatat transaksi baru segera.
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                Pendapatan Hari Ini
+              </span>
+              <span className="badge-eyebrow" style={{ background: 'rgba(16, 185, 129, 0.08)', color: 'var(--success)', border: '1px solid rgba(16, 185, 129, 0.15)' }}>LIVE</span>
+            </div>
+            <div>
+              <h2
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '34px',
+                  fontWeight: 700,
+                  color: '#ffffff',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                {formatCurrency(stats?.totalRevenue || 0)}
+              </h2>
+              <span style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 550 }}>
+                Terhitung dari transaksi lokal sukses hari ini
+              </span>
+            </div>
           </div>
-          <button
-            onClick={onNavigateToKasir}
+        </div>
+
+        {/* Card Receipts - Bento span 4 */}
+        <div
+          className="bezel-outer interactive"
+          style={{
+            gridColumn: 'span 4',
+          }}
+        >
+          <div
+            className="bezel-inner"
             style={{
-              background: 'var(--primary)',
-              color: 'var(--text-primary)',
-              border: 'none',
-              padding: '12px 20px',
-              borderRadius: 'var(--radius-sm)',
-              fontFamily: 'var(--font-sans)',
-              fontWeight: '600',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px var(--primary-glow)',
-              transition: 'background var(--transition-fast)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: '12px',
+              minHeight: '160px',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--primary-hover)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--primary)')}
           >
-            Mulai Transaksi
-          </button>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              Jumlah Struk Tercetak
+            </span>
+            <div>
+              <h2
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '34px',
+                  fontWeight: 700,
+                  color: 'var(--primary)',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                {stats?.receipts || 0} <span style={{ fontSize: '18px', fontWeight: 500, color: 'var(--text-secondary)' }}>Struk</span>
+              </h2>
+              <span style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 550 }}>
+                Total pesanan berhasil diproses hari ini
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Access Card - Bento span 3 */}
+        <div
+          className="bezel-outer interactive"
+          style={{
+            gridColumn: 'span 3',
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(255, 255, 255, 0.01))',
+            borderColor: 'rgba(99, 102, 241, 0.25)',
+          }}
+        >
+          <div
+            className="bezel-inner"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: '16px',
+              minHeight: '160px',
+              background: 'transparent',
+              border: 'none',
+              padding: '20px',
+            }}
+          >
+            <div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#ffffff', marginBottom: '4px' }}>
+                Akses Kasir Cepat
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4 }}>
+                Mencatat order dan mencetak struk transaksi baru.
+              </p>
+            </div>
+            <button
+              onClick={onNavigateToKasir}
+              className="btn-pill-primary"
+              style={{
+                width: '100%',
+                padding: '10px 16px',
+                fontSize: '13px',
+              }}
+            >
+              Mulai Transaksi
+              <span className="btn-icon-wrapper">↗</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -206,197 +230,196 @@ export function Dashboard({ onNavigateToKasir }: DashboardProps) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '2fr 1fr',
+          gridTemplateColumns: '8fr 4fr',
           gap: '24px',
         }}
+        className="bento-grid-split"
       >
         {/* Sales Chart Simulation */}
-        <div
-          style={{
-            background: 'var(--bg-glass)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '24px',
-            boxShadow: 'var(--shadow-md)',
-          }}
-        >
-          <h3 style={{ fontSize: '18px', marginBottom: '24px' }}>
-            Tren Penjualan (Simulasi Grafik Hari Ini)
-          </h3>
-          <div
-            style={{
-              height: '200px',
-              width: '100%',
-              display: 'flex',
-              alignItems: 'flex-end',
-              gap: '16px',
-              paddingBottom: '20px',
-              borderBottom: '1px solid var(--border-color)',
-            }}
-          >
-            {/* Hour points representation using SVG or styled divs */}
-            {(stats?.chartData || [
-              { label: '08:00', val: 5, amount: 0 },
-              { label: '10:00', val: 5, amount: 0 },
-              { label: '12:00', val: 5, amount: 0 },
-              { label: '14:00', val: 5, amount: 0 },
-              { label: '16:00', val: 5, amount: 0 },
-              { label: '18:00', val: 5, amount: 0 },
-              { label: '20:00', val: 5, amount: 0 },
-              { label: '22:00', val: 5, amount: 0 },
-            ]).map((pt, idx) => (
-              <div
-                key={idx}
-                title={pt.amount > 0 ? `Penjualan: ${formatCurrency(pt.amount)}` : 'Tidak ada penjualan'}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                }}
-              >
-                <div
-                  style={{
-                    width: '100%',
-                    backgroundColor: pt.amount > 0 ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
-                    height: `${pt.val}%`,
-                    borderRadius: '4px 4px 0 0',
-                    boxShadow: pt.amount > 0 ? '0 4px 10px var(--primary-glow)' : 'none',
-                    transition: 'height 0.5s ease',
-                  }}
-                />
-                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                  {pt.label}
-                </span>
-              </div>
-            ))}
+        <div className="bezel-outer">
+          <div className="bezel-inner" style={{ padding: '24px 28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 650 }}>
+                Tren Penjualan (Simulasi Grafik Hari Ini)
+              </h3>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>IDR / 2 JAM</span>
+            </div>
+
+            <div
+              style={{
+                height: '220px',
+                width: '100%',
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: '18px',
+                paddingBottom: '8px',
+                borderBottom: '1px solid rgba(255,255,255,0.04)',
+              }}
+            >
+              {/* Hour points representation */}
+              {(stats?.chartData || [
+                { label: '08:00', val: 5, amount: 0 },
+                { label: '10:00', val: 5, amount: 0 },
+                { label: '12:00', val: 5, amount: 0 },
+                { label: '14:00', val: 5, amount: 0 },
+                { label: '16:00', val: 5, amount: 0 },
+                { label: '18:00', val: 5, amount: 0 },
+                { label: '20:00', val: 5, amount: 0 },
+                { label: '22:00', val: 5, amount: 0 },
+              ]).map((pt, idx) => {
+                const isPositive = pt.amount > 0;
+                return (
+                  <div
+                    key={idx}
+                    title={isPositive ? `Penjualan: ${formatCurrency(pt.amount)}` : 'Tidak ada penjualan'}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '10px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end' }}>
+                      <div
+                        style={{
+                          width: '100%',
+                          background: isPositive
+                            ? 'linear-gradient(to top, var(--primary), var(--primary-hover))'
+                            : 'rgba(255,255,255,0.03)',
+                          height: `${pt.val}%`,
+                          borderRadius: '8px 8px 0 0',
+                          boxShadow: isPositive ? '0 4px 20px var(--primary-glow)' : 'none',
+                          transition: 'height var(--transition-normal), background var(--transition-fast)',
+                        }}
+                      />
+                    </div>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                      {pt.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
         {/* Popular Payment Methods */}
-        <div
-          style={{
-            background: 'var(--bg-glass)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '24px',
-            boxShadow: 'var(--shadow-md)',
-          }}
-        >
-          <h3 style={{ fontSize: '18px', marginBottom: '24px' }}>
-            Metode Pembayaran
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {[
-              { id: 'cash', label: 'Tunai (Cash)', color: '#10b981' },
-              { id: 'static_qris', label: 'QRIS Statis', color: '#6366f1' },
-              { id: 'dynamic_qris', label: 'QRIS Dinamis', color: '#8b5cf6' },
-              { id: 'ewallet', label: 'E-Wallet', color: '#ec4899' },
-              { id: 'debit_credit', label: 'Kartu Debit/Kredit', color: '#f59e0b' },
-            ].map((method) => {
-              const amount = stats?.paymentMethods[method.id] || 0;
-              const total = Object.values(stats?.paymentMethods || {}).reduce((s, a) => s + a, 0) || 1;
-              const percentage = Math.round((amount / total) * 100);
+        <div className="bezel-outer">
+          <div className="bezel-inner">
+            <h3 style={{ fontSize: '18px', fontWeight: 650, marginBottom: '28px' }}>
+              Metode Pembayaran
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {[
+                { id: 'cash', label: 'Tunai (Cash)', color: '#10b981' },
+                { id: 'static_qris', label: 'QRIS Statis', color: '#6366f1' },
+                { id: 'dynamic_qris', label: 'QRIS Dinamis', color: '#8b5cf6' },
+                { id: 'ewallet', label: 'E-Wallet', color: '#ec4899' },
+                { id: 'debit_credit', label: 'Kartu Debit/Kredit', color: '#f59e0b' },
+              ].map((method) => {
+                const amount = stats?.paymentMethods[method.id] || 0;
+                const total = Object.values(stats?.paymentMethods || {}).reduce((s, a) => s + a, 0) || 1;
+                const percentage = Math.round((amount / total) * 100);
 
-              return (
-                <div key={method.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>{method.label}</span>
-                    <span style={{ fontWeight: '600' }}>{formatCurrency(amount)} ({percentage}%)</span>
-                  </div>
-                  <div
-                    style={{
-                      height: '6px',
-                      backgroundColor: 'rgba(255,255,255,0.05)',
-                      borderRadius: '3px',
-                      overflow: 'hidden',
-                    }}
-                  >
+                return (
+                  <div key={method.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                      <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{method.label}</span>
+                      <span style={{ fontWeight: '700', color: '#ffffff' }}>{formatCurrency(amount)} ({percentage}%)</span>
+                    </div>
                     <div
                       style={{
-                        height: '100%',
-                        backgroundColor: method.color,
-                        width: `${percentage}%`,
+                        height: '6px',
+                        backgroundColor: 'rgba(255,255,255,0.03)',
+                        borderRadius: '3px',
+                        overflow: 'hidden',
+                        border: '1px solid rgba(255,255,255,0.02)',
                       }}
-                    />
+                    >
+                      <div
+                        style={{
+                          height: '100%',
+                          backgroundColor: method.color,
+                          width: `${percentage}%`,
+                          boxShadow: `0 0 8px ${method.color}`,
+                          borderRadius: '3px',
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Recent Activity */}
-      <div
-        style={{
-          background: 'var(--bg-glass)',
-          border: '1px solid var(--border-color)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '24px',
-          boxShadow: 'var(--shadow-md)',
-        }}
-      >
-        <h3 style={{ fontSize: '18px', marginBottom: '16px' }}>
-          Transaksi Terakhir (Hari Ini)
-        </h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
-              <th style={{ padding: '12px 8px', fontSize: '13px' }}>Nomor Struk</th>
-              <th style={{ padding: '12px 8px', fontSize: '13px' }}>Meja</th>
-              <th style={{ padding: '12px 8px', fontSize: '13px' }}>Waktu</th>
-              <th style={{ padding: '12px 8px', fontSize: '13px' }}>Status</th>
-              <th style={{ padding: '12px 8px', fontSize: '13px', textAlign: 'right' }}>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stats?.recentOrders.length === 0 ? (
-              <tr>
-                <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  Belum ada transaksi hari ini.
-                </td>
-              </tr>
-            ) : (
-              stats?.recentOrders.map((order) => (
-                <tr
-                  key={order.id}
-                  style={{
-                    borderBottom: '1px solid rgba(255,255,255,0.03)',
-                    fontSize: '14px',
-                  }}
-                >
-                  <td style={{ padding: '12px 8px', fontWeight: '500' }}>
-                    {order.receiptNumber}
-                  </td>
-                  <td style={{ padding: '12px 8px' }}>{order.tableNumber || '-'}</td>
-                  <td style={{ padding: '12px 8px', color: 'var(--text-muted)' }}>
-                    {new Date(order.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                  </td>
-                  <td style={{ padding: '12px 8px' }}>
-                    <span
-                      style={{
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        color: 'var(--success)',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: '11px',
-                        fontWeight: '600',
-                      }}
-                    >
-                      LUNAS
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '600', color: 'var(--success)' }}>
-                    {formatCurrency(Number(order.grandTotal))}
-                  </td>
+      <div className="bezel-outer">
+        <div className="bezel-inner" style={{ padding: '24px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 650, marginBottom: '20px' }}>
+            Transaksi Terakhir (Hari Ini)
+          </h3>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table-premium" style={{ width: '100%' }}>
+              <thead>
+                <tr>
+                  <th>Nomor Struk</th>
+                  <th>Meja</th>
+                  <th>Waktu</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Total</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {stats?.recentOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13px' }}>
+                      Belum ada transaksi hari ini.
+                    </td>
+                  </tr>
+                ) : (
+                  stats?.recentOrders.map((order) => (
+                    <tr key={order.id}>
+                      <td style={{ fontWeight: '600', color: '#ffffff' }}>
+                        {order.receiptNumber}
+                      </td>
+                      <td style={{ fontWeight: '550' }}>Meja {order.tableNumber || '-'}</td>
+                      <td style={{ color: 'var(--text-secondary)' }}>
+                        {new Date(order.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td>
+                        <span
+                          style={{
+                            backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                            border: '1px solid rgba(16, 185, 129, 0.15)',
+                            color: 'var(--success)',
+                            padding: '4px 10px',
+                            borderRadius: '999px',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            letterSpacing: '0.02em',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <span className="status-badge-pulse" style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--success)', color: 'var(--success)' }} />
+                          LUNAS
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right', fontWeight: '700', color: 'var(--success)' }}>
+                        {formatCurrency(Number(order.grandTotal))}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );

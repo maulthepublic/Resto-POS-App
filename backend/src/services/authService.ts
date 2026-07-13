@@ -128,4 +128,24 @@ export const authService = {
       select: { id: true, name: true, role: true, isActive: true },
     });
   },
+
+  // Set or update a user's PIN — hashes before saving, never stores plaintext
+  async setPin(targetUserId: string, newPin: string) {
+    if (!newPin || newPin.trim().length < 4) {
+      throw Object.assign(new Error('PIN minimal 4 karakter.'), { statusCode: 400 });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: targetUserId } });
+    if (!user) {
+      throw Object.assign(new Error('Pengguna tidak ditemukan.'), { statusCode: 404 });
+    }
+
+    const pinHash = await bcrypt.hash(newPin, SALT_ROUNDS);
+    await prisma.user.update({
+      where: { id: targetUserId },
+      data: { pinHash },
+    });
+
+    return { message: 'PIN berhasil diperbarui.' };
+  },
 };

@@ -334,7 +334,7 @@ export function Kasir() {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '24px', height: 'calc(100vh - 150px)' }}>
+    <div className="page-shell page-kasir" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 390px', gap: '24px', height: 'calc(100dvh - 166px)' }}>
       
       {/* Left Screen: Catalog and Products */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto', paddingRight: '4px' }}>
@@ -346,29 +346,25 @@ export function Kasir() {
             placeholder="Cari menu makanan atau minuman..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            className="input-premium"
             style={{
               flex: 1,
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)',
-              padding: '12px 16px',
-              borderRadius: 'var(--radius-sm)',
-              outline: 'none',
-              fontFamily: 'var(--font-sans)',
             }}
           />
 
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
+            className="input-premium"
             style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)',
-              padding: '12px 16px',
-              borderRadius: 'var(--radius-sm)',
-              outline: 'none',
+              width: '200px',
               cursor: 'pointer',
+              appearance: 'none',
+              backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E")',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 14px center',
+              backgroundSize: '16px',
+              paddingRight: '40px',
             }}
           >
             <option value="all">Semua Kategori</option>
@@ -384,44 +380,41 @@ export function Kasir() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            gap: '20px',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
+            gap: '18px',
           }}
         >
           {filteredMenuItems.map((item) => (
             <div
               key={item.id}
               onClick={() => handleItemClick(item)}
+              className="bezel-outer interactive"
               style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                borderRadius: 'var(--radius-md)',
-                padding: '16px',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                gap: '12px',
-                transition: 'all var(--transition-fast)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--primary)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-color)';
-                e.currentTarget.style.transform = 'translateY(0)';
+                padding: '6px',
               }}
             >
-              <div>
-                <h4 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '4px' }}>{item.name}</h4>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {item.description}
-                </p>
+              <div
+                className="bezel-inner"
+                style={{
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  minHeight: '144px',
+                  background: 'rgba(10, 16, 30, 0.4)',
+                }}
+              >
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: '650', color: '#ffffff', marginBottom: '4px', letterSpacing: '-0.01em' }}>{item.name}</h4>
+                  <p style={{ fontSize: '11px', color: 'var(--text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }}>
+                    {item.description}
+                  </p>
+                </div>
+                <span style={{ fontWeight: '700', color: 'var(--primary-hover)', fontSize: '16px' }}>
+                  {formatCurrency(Number(item.basePrice))}
+                </span>
               </div>
-              <span style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '16px' }}>
-                {formatCurrency(Number(item.basePrice))}
-              </span>
             </div>
           ))}
         </div>
@@ -429,125 +422,174 @@ export function Kasir() {
 
       {/* Right Screen: Shopping Cart Sidebar */}
       <div
+        className="bezel-outer"
         style={{
-          background: 'var(--bg-glass)',
-          border: '1px solid var(--border-color)',
-          borderRadius: 'var(--radius-lg)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          padding: '20px',
-          boxShadow: 'var(--shadow-md)',
+          padding: '6px',
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto', flex: 1 }}>
-          <h3 style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>Keranjang Belanja</h3>
-          
-          {cartItems.length === 0 ? (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '14px', textAlign: 'center', minHeight: '150px' }}>
-              Keranjang masih kosong.<br />Ketuk menu di sebelah kiri untuk memesan.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {cartItems.map((item) => (
-                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '12px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '70%' }}>
-                    <span style={{ fontSize: '14px', fontWeight: '500' }}>{item.menuItem.name}</span>
-                    
-                    {/* Variants Info */}
-                    {item.selectedVariants.map((v) => (
-                      <span key={v.id} style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                        ▪ {v.name}
-                      </span>
-                    ))}
-                    {/* Modifiers Info */}
-                    {item.selectedModifiers.map((m) => (
-                      <span key={m.id} style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                        + {m.name} (+{formatCurrency(Number(m.priceDelta))})
-                      </span>
-                    ))}
-                    
-                    {item.kitchenNote && (
-                      <span style={{ fontSize: '11px', color: 'var(--warning)', fontStyle: 'italic' }}>
-                        Note: {item.kitchenNote}
-                      </span>
-                    )}
+        <div
+          className="bezel-inner"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            padding: '20px 18px',
+            background: 'rgba(6, 10, 18, 0.75)',
+            backdropFilter: 'blur(20px)',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto', flex: 1, paddingRight: '2px' }}>
+            <h3 style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', fontSize: '17px', color: '#ffffff', fontWeight: 650 }}>
+              Keranjang Belanja
+            </h3>
+            
+            {cartItems.length === 0 ? (
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '13px', textAlign: 'center', minHeight: '150px', lineHeight: 1.5 }}>
+                Keranjang masih kosong.<br />Ketuk menu di sebelah kiri untuk memesan.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {cartItems.map((item) => (
+                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '14px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '68%' }}>
+                      <span style={{ fontSize: '13.5px', fontWeight: '600', color: '#ffffff' }}>{item.menuItem.name}</span>
+                      
+                      {/* Variants Info */}
+                      {item.selectedVariants.map((v) => (
+                        <span key={v.id} style={{ fontSize: '10.5px', color: 'var(--text-secondary)' }}>
+                          ▪ {v.name}
+                        </span>
+                      ))}
+                      {/* Modifiers Info */}
+                      {item.selectedModifiers.map((m) => (
+                        <span key={m.id} style={{ fontSize: '10.5px', color: 'var(--text-secondary)' }}>
+                          + {m.name} <span style={{ color: 'var(--text-muted)' }}>(+{formatCurrency(Number(m.priceDelta))})</span>
+                        </span>
+                      ))}
+                      
+                      {item.kitchenNote && (
+                        <span style={{ fontSize: '10.5px', color: 'var(--warning)', fontStyle: 'italic', fontWeight: 550 }}>
+                          Note: {item.kitchenNote}
+                        </span>
+                      )}
 
-                    <span style={{ fontSize: '12px', color: 'var(--primary)', fontWeight: '600' }}>
-                      {formatCurrency(item.unitPrice)}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer' }}
-                      >
-                        -
-                      </button>
-                      <span style={{ fontSize: '14px', fontWeight: '600' }}>{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer' }}
-                      >
-                        +
-                      </button>
+                      <span style={{ fontSize: '12px', color: 'var(--primary-hover)', fontWeight: '700', marginTop: '2px' }}>
+                        {formatCurrency(item.unitPrice)}
+                      </span>
                     </div>
-                    <span style={{ fontSize: '13px', fontWeight: '600' }}>{formatCurrency(item.lineTotal)}</span>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', gap: '8px' }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '6px',
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        borderRadius: '8px',
+                        padding: '2px'
+                      }}>
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          style={{ 
+                            width: '22px', 
+                            height: '22px', 
+                            borderRadius: '6px', 
+                            background: 'rgba(255, 255, 255, 0.03)', 
+                            border: 'none', 
+                            color: '#ffffff', 
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          -
+                        </button>
+                        <span style={{ fontSize: '13px', fontWeight: '700', minWidth: '16px', textAlign: 'center', color: '#ffffff' }}>{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          style={{ 
+                            width: '22px', 
+                            height: '22px', 
+                            borderRadius: '6px', 
+                            background: 'rgba(255, 255, 255, 0.03)', 
+                            border: 'none', 
+                            color: '#ffffff', 
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: '#ffffff' }}>{formatCurrency(item.lineTotal)}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Calculation Panel */}
+          <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              <span>Subtotal:</span>
+              <span style={{ color: '#ffffff', fontWeight: 600 }}>{formatCurrency(totals.subtotal)}</span>
             </div>
-          )}
-        </div>
 
-        {/* Calculation Panel */}
-        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-secondary)' }}>
-            <span>Subtotal:</span>
-            <span>{formatCurrency(totals.subtotal)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-secondary)', alignItems: 'center' }}>
+              <span>Diskon (%):</span>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={discountPercent}
+                onChange={(e) => setDiscount(Number(e.target.value))}
+                className="input-premium"
+                style={{ 
+                  width: '64px', 
+                  padding: '6px 8px', 
+                  textAlign: 'center',
+                  fontSize: '12px'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              <span>Pajak (10%):</span>
+              <span style={{ color: '#ffffff', fontWeight: 600 }}>{formatCurrency(totals.taxTotal)}</span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '700', fontSize: '17px', margin: '6px 0', borderTop: '1px dashed rgba(255,255,255,0.06)', paddingTop: '12px' }}>
+              <span>TOTAL:</span>
+              <span style={{ color: 'var(--success)' }}>{formatCurrency(totals.grandTotal)}</span>
+            </div>
+
+            <button
+              onClick={() => setShowCheckoutModal(true)}
+              disabled={cartItems.length === 0}
+              className={cartItems.length === 0 ? "" : "btn-pill-primary"}
+              style={{
+                width: '100%',
+                padding: '12px',
+                fontSize: '14px',
+                background: cartItems.length === 0 ? 'rgba(255, 255, 255, 0.02)' : undefined,
+                color: cartItems.length === 0 ? 'var(--text-muted)' : undefined,
+                border: cartItems.length === 0 ? '1px solid rgba(255,255,255,0.04)' : undefined,
+                cursor: cartItems.length === 0 ? 'not-allowed' : 'pointer',
+                boxShadow: cartItems.length === 0 ? 'none' : undefined,
+              }}
+            >
+              Bayar / Transaksi
+              {cartItems.length > 0 && <span className="btn-icon-wrapper">↗</span>}
+            </button>
           </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-secondary)', alignItems: 'center' }}>
-            <span>Diskon (%):</span>
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={discountPercent}
-              onChange={(e) => setDiscount(Number(e.target.value))}
-              style={{ width: '60px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '4px', borderRadius: '4px', textAlign: 'center' }}
-            />
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-secondary)' }}>
-            <span>Pajak (10%):</span>
-            <span>{formatCurrency(totals.taxTotal)}</span>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '700', fontSize: '16px', margin: '8px 0' }}>
-            <span>TOTAL:</span>
-            <span style={{ color: 'var(--success)' }}>{formatCurrency(totals.grandTotal)}</span>
-          </div>
-
-          <button
-            onClick={() => setShowCheckoutModal(true)}
-            disabled={cartItems.length === 0}
-            style={{
-              width: '100%',
-              background: cartItems.length === 0 ? 'var(--bg-card)' : 'var(--primary)',
-              color: cartItems.length === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
-              border: 'none',
-              padding: '14px',
-              borderRadius: 'var(--radius-sm)',
-              fontWeight: '600',
-              cursor: cartItems.length === 0 ? 'not-allowed' : 'pointer',
-              transition: 'background var(--transition-fast)',
-            }}
-          >
-            Bayar / Transaksi
-          </button>
         </div>
       </div>
 
@@ -560,159 +602,235 @@ export function Kasir() {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0,0,0,0.6)',
+            background: 'rgba(2, 3, 6, 0.8)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 100,
-            backdropFilter: 'blur(4px)',
+            backdropFilter: 'blur(12px)',
           }}
         >
           <div
+            className="bezel-outer"
             style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-lg)',
-              padding: '28px',
               width: '100%',
               maxWidth: '500px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '20px',
+              boxShadow: 'var(--shadow-lg)',
+              animation: 'premium-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
             }}
           >
-            <div>
-              <h3 style={{ fontSize: '20px', color: 'var(--primary)' }}>Kustomisasi {activeItemConfig.name}</h3>
-              <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Pilih variasi dan tambahan menu</p>
-            </div>
+            <div
+              className="bezel-inner"
+              style={{
+                padding: '32px 28px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '24px',
+                background: 'rgba(10, 16, 30, 0.75)',
+              }}
+            >
+              <div>
+                <div className="badge-eyebrow" style={{ marginBottom: '8px' }}>CUSTOMIZATION</div>
+                <h3 style={{ fontSize: '20px', color: '#ffffff', fontWeight: 700 }}>Kustomisasi {activeItemConfig.name}</h3>
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Pilih variasi dan tambahan menu</p>
+              </div>
 
-            {/* Render Variant Groups */}
-            {variantGroups
-              .filter((g) => g.menuItemId === activeItemConfig.id)
-              .map((grp) => (
-                <div key={grp.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <span style={{ fontSize: '14px', fontWeight: '600' }}>
-                    {grp.name} {grp.isRequired && <span style={{ color: 'var(--danger)' }}>*Wajib</span>}
-                  </span>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    {variants
-                      .filter((v) => v.variantGroupId === grp.id)
-                      .map((vari) => {
-                        const isChosen = chosenVariants.some((v) => v.id === vari.id);
+              {/* Render Variant Groups */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {variantGroups
+                  .filter((g) => g.menuItemId === activeItemConfig.id)
+                  .map((grp) => (
+                    <div key={grp.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <span style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-secondary)' }}>
+                        {grp.name} {grp.isRequired && <span style={{ color: 'var(--danger)', fontSize: '11px', marginLeft: '4px' }}>*Wajib</span>}
+                      </span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                        {variants
+                          .filter((v) => v.variantGroupId === grp.id)
+                          .map((vari) => {
+                            const isChosen = chosenVariants.some((v) => v.id === vari.id);
+                            return (
+                              <button
+                                key={vari.id}
+                                onClick={() => {
+                                  // Since max_selected = 1 for simple variants
+                                  const otherChosen = chosenVariants.filter((v) => v.variantGroupId !== grp.id);
+                                  setChosenVariants([...otherChosen, vari]);
+                                }}
+                                style={{
+                                  background: isChosen ? 'linear-gradient(135deg, var(--primary), #4f46e5)' : 'rgba(255,255,255,0.02)',
+                                  border: isChosen ? '1px solid rgba(255,255,255,0.1)' : '1px solid var(--border-color)',
+                                  color: isChosen ? '#ffffff' : 'var(--text-secondary)',
+                                  padding: '8px 16px',
+                                  borderRadius: '10px',
+                                  cursor: 'pointer',
+                                  fontSize: '12.5px',
+                                  fontWeight: '600',
+                                  transition: 'all var(--transition-fast)',
+                                  boxShadow: isChosen ? '0 4px 12px var(--primary-glow)' : 'none',
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!isChosen) {
+                                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)';
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!isChosen) {
+                                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)';
+                                  }
+                                }}
+                              >
+                                {vari.name} {Number(vari.priceDelta) !== 0 && `(+${formatCurrency(Number(vari.priceDelta))})`}
+                              </button>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  ))}
+
+                {/* Modifiers (Optional toppings) */}
+                {modifiers.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-secondary)' }}>Tambahan (Topping)</span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                      {modifiers.map((mod) => {
+                        const isChosen = chosenModifiers.some((m) => m.id === mod.id);
                         return (
                           <button
-                            key={vari.id}
+                            key={mod.id}
                             onClick={() => {
-                              // Since max_selected = 1 for simple variants
-                              const otherChosen = chosenVariants.filter((v) => v.variantGroupId !== grp.id);
-                              setChosenVariants([...otherChosen, vari]);
+                              if (isChosen) {
+                                setChosenModifiers(chosenModifiers.filter((m) => m.id !== mod.id));
+                              } else {
+                                setChosenModifiers([...chosenModifiers, mod]);
+                              }
                             }}
                             style={{
-                              background: isChosen ? 'var(--primary)' : 'var(--bg-main)',
-                              border: isChosen ? '1px solid var(--primary)' : '1px solid var(--border-color)',
-                              color: 'var(--text-primary)',
-                              padding: '8px 16px',
-                              borderRadius: 'var(--radius-sm)',
+                              background: isChosen ? 'linear-gradient(135deg, var(--primary), #4f46e5)' : 'rgba(255,255,255,0.02)',
+                              border: isChosen ? '1px solid rgba(255,255,255,0.1)' : '1px solid var(--border-color)',
+                              color: isChosen ? '#ffffff' : 'var(--text-secondary)',
+                              padding: '8px 14px',
+                              borderRadius: '10px',
                               cursor: 'pointer',
-                              fontSize: '13px',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              transition: 'all var(--transition-fast)',
+                              boxShadow: isChosen ? '0 4px 12px var(--primary-glow)' : 'none',
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isChosen) {
+                                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isChosen) {
+                                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)';
+                              }
                             }}
                           >
-                            {vari.name} {Number(vari.priceDelta) !== 0 && `(+${formatCurrency(Number(vari.priceDelta))})`}
+                            {mod.name} (+{formatCurrency(Number(mod.priceDelta))})
                           </button>
                         );
                       })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )}
 
-            {/* Modifiers (Optional toppings) */}
-            {modifiers.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <span style={{ fontSize: '14px', fontWeight: '600' }}>Tambahan (Topping)</span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {modifiers.map((mod) => {
-                    const isChosen = chosenModifiers.some((m) => m.id === mod.id);
-                    return (
-                      <button
-                        key={mod.id}
-                        onClick={() => {
-                          if (isChosen) {
-                            setChosenModifiers(chosenModifiers.filter((m) => m.id !== mod.id));
-                          } else {
-                            setChosenModifiers([...chosenModifiers, mod]);
-                          }
-                        }}
-                        style={{
-                          background: isChosen ? 'var(--primary)' : 'var(--bg-main)',
-                          border: isChosen ? '1px solid var(--primary)' : '1px solid var(--border-color)',
-                          color: 'var(--text-primary)',
-                          padding: '8px 12px',
-                          borderRadius: 'var(--radius-sm)',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                        }}
-                      >
-                        {mod.name} (+{formatCurrency(Number(mod.priceDelta))})
-                      </button>
-                    );
-                  })}
+                {/* Notes Input */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <span style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-secondary)' }}>Catatan Dapur</span>
+                  <input
+                    type="text"
+                    placeholder="Contoh: jangan pakai kol, extra kecap..."
+                    value={itemNote}
+                    onChange={(e) => setItemNote(e.target.value)}
+                    className="input-premium"
+                  />
                 </div>
               </div>
-            )}
 
-            {/* Notes Input */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontSize: '14px', fontWeight: '600' }}>Catatan Dapur</span>
-              <input
-                type="text"
-                placeholder="Contoh: jangan pakai kol, extra kecap..."
-                value={itemNote}
-                onChange={(e) => setItemNote(e.target.value)}
-                style={{
-                  background: 'var(--bg-main)',
-                  border: '1px solid var(--border-color)',
-                  color: 'var(--text-primary)',
-                  padding: '10px 14px',
-                  borderRadius: 'var(--radius-sm)',
-                  outline: 'none',
-                }}
-              />
-            </div>
+              {/* Quantity Selector inside modal */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '12px',
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  borderRadius: '10px',
+                  padding: '4px'
+                }}>
+                  <button
+                    onClick={() => setItemQuantity(Math.max(1, itemQuantity - 1))}
+                    style={{ 
+                      width: '32px', 
+                      height: '32px', 
+                      borderRadius: '8px', 
+                      background: 'rgba(255, 255, 255, 0.03)', 
+                      border: 'none', 
+                      color: '#ffffff', 
+                      cursor: 'pointer', 
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    -
+                  </button>
+                  <span style={{ fontSize: '15px', fontWeight: '700', minWidth: '24px', textAlign: 'center', color: '#ffffff' }}>{itemQuantity}</span>
+                  <button
+                    onClick={() => setItemQuantity(itemQuantity + 1)}
+                    style={{ 
+                      width: '32px', 
+                      height: '32px', 
+                      borderRadius: '8px', 
+                      background: 'rgba(255, 255, 255, 0.03)', 
+                      border: 'none', 
+                      color: '#ffffff', 
+                      cursor: 'pointer', 
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
 
-            {/* Quantity Selector inside modal */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <button
-                  onClick={() => setItemQuantity(Math.max(1, itemQuantity - 1))}
-                  style={{ width: '32px', height: '32px', borderRadius: '4px', background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '18px' }}
-                >
-                  -
-                </button>
-                <span style={{ fontSize: '16px', fontWeight: '700' }}>{itemQuantity}</span>
-                <button
-                  onClick={() => setItemQuantity(itemQuantity + 1)}
-                  style={{ width: '32px', height: '32px', borderRadius: '4px', background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '18px' }}
-                >
-                  +
-                </button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={() => setActiveItemConfig(null)}
+                    style={{ 
+                      background: 'transparent', 
+                      border: 'none', 
+                      color: 'var(--text-secondary)', 
+                      cursor: 'pointer', 
+                      padding: '10px 16px',
+                      fontWeight: '600',
+                      fontSize: '13px'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleCustomizationSubmit}
+                    className="btn-pill-primary"
+                    style={{ 
+                      padding: '10px 24px',
+                      fontSize: '13px'
+                    }}
+                  >
+                    Simpan Order
+                  </button>
+                </div>
               </div>
-
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button
-                  onClick={() => setActiveItemConfig(null)}
-                  style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '10px 16px' }}
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleCustomizationSubmit}
-                  style={{ background: 'var(--primary)', color: 'var(--text-primary)', border: 'none', padding: '10px 24px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: '600' }}
-                >
-                  Simpan Order
-                </button>
-              </div>
             </div>
-
           </div>
         </div>
       )}
@@ -726,147 +844,188 @@ export function Kasir() {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0,0,0,0.6)',
+            background: 'rgba(2, 3, 6, 0.8)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 100,
-            backdropFilter: 'blur(4px)',
+            backdropFilter: 'blur(12px)',
           }}
         >
           <div
+            className="bezel-outer"
             style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-lg)',
-              padding: '28px',
               width: '100%',
-              maxWidth: '450px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '20px',
+              maxWidth: '460px',
+              boxShadow: 'var(--shadow-lg)',
+              animation: 'premium-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
             }}
           >
-            <h3 style={{ fontSize: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>Pembayaran</h3>
-
-            {/* Table Number */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Nomor Meja / Keterangan</label>
-              <input
-                type="text"
-                placeholder="Contoh: Meja 05, Bungkus..."
-                value={tableNumber}
-                onChange={(e) => setTableNumber(e.target.value)}
-                style={{
-                  background: 'var(--bg-main)',
-                  border: '1px solid var(--border-color)',
-                  color: 'var(--text-primary)',
-                  padding: '10px 12px',
-                  borderRadius: 'var(--radius-sm)',
-                  outline: 'none',
-                }}
-              />
-            </div>
-
-            {/* Payment Method Selector */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Pilih Metode Pembayaran</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                {[
-                  { id: 'cash', label: 'Tunai (Cash)' },
-                  { id: 'static_qris', label: 'QRIS Statis' },
-                  { id: 'dynamic_qris', label: 'QRIS Dinamis', disabled: isOffline },
-                  { id: 'ewallet', label: 'E-Wallet' },
-                  { id: 'debit_credit', label: 'Debit / Kredit' },
-                ].map((m) => (
-                  <button
-                    key={m.id}
-                    disabled={m.disabled}
-                    onClick={() => setPaymentMethod(m.id as any)}
-                    style={{
-                      background: paymentMethod === m.id ? 'var(--primary)' : 'var(--bg-main)',
-                      border: paymentMethod === m.id ? '1px solid var(--primary)' : '1px solid var(--border-color)',
-                      color: m.disabled ? 'var(--text-muted)' : 'var(--text-primary)',
-                      padding: '10px',
-                      borderRadius: 'var(--radius-sm)',
-                      cursor: m.disabled ? 'not-allowed' : 'pointer',
-                      opacity: m.disabled ? 0.4 : 1,
-                      fontSize: '13px',
-                      fontWeight: paymentMethod === m.id ? '600' : '400',
-                    }}
-                  >
-                    {m.label} {m.disabled && '(Offline)'}
-                  </button>
-                ))}
+            <div
+              className="bezel-inner"
+              style={{
+                padding: '32px 28px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '24px',
+                background: 'rgba(10, 16, 30, 0.75)',
+              }}
+            >
+              <div>
+                <div className="badge-eyebrow" style={{ marginBottom: '8px' }}>CHECKOUT PROCESS</div>
+                <h3 style={{ fontSize: '20px', color: '#ffffff', fontWeight: 700 }}>Pembayaran</h3>
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Lengkapi rincian pesanan pelanggan</p>
               </div>
-            </div>
 
-            {/* If Cash, Enter amount */}
-            {paymentMethod === 'cash' && (
+              {/* Table Number */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Uang Diterima</label>
+                <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 650, textTransform: 'uppercase', letterSpacing: '0.02em' }}>Nomor Meja / Keterangan</label>
                 <input
-                  type="number"
-                  placeholder="Masukkan jumlah tunai..."
-                  value={amountPaid}
-                  onChange={(e) => setAmountPaid(e.target.value)}
-                  style={{
-                    background: 'var(--bg-main)',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--text-primary)',
-                    padding: '10px 12px',
-                    borderRadius: 'var(--radius-sm)',
-                    outline: 'none',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                  }}
+                  type="text"
+                  placeholder="Contoh: Meja 05, Bungkus..."
+                  value={tableNumber}
+                  onChange={(e) => setTableNumber(e.target.value)}
+                  className="input-premium"
                 />
-                <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                  {[totals.grandTotal, 20000, 50000, 100000].map((quick) => (
-                    <button
-                      key={quick}
-                      onClick={() => setAmountPaid(String(Math.ceil(quick)))}
-                      style={{
-                        background: 'var(--bg-main)',
-                        border: '1px solid var(--border-color)',
-                        color: 'var(--text-primary)',
-                        padding: '4px 8px',
-                        fontSize: '11px',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {formatCurrency(Math.ceil(quick))}
-                    </button>
-                  ))}
+              </div>
+
+              {/* Payment Method Selector */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 650, textTransform: 'uppercase', letterSpacing: '0.02em' }}>Pilih Metode Pembayaran</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  {[
+                    { id: 'cash', label: 'Tunai (Cash)' },
+                    { id: 'static_qris', label: 'QRIS Statis' },
+                    { id: 'dynamic_qris', label: 'QRIS Dinamis', disabled: isOffline },
+                    { id: 'ewallet', label: 'E-Wallet' },
+                    { id: 'debit_credit', label: 'Debit / Kredit' },
+                  ].map((m) => {
+                    const isSelected = paymentMethod === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        disabled={m.disabled}
+                        onClick={() => setPaymentMethod(m.id as any)}
+                        style={{
+                          background: isSelected ? 'linear-gradient(135deg, var(--primary), #4f46e5)' : 'rgba(255,255,255,0.02)',
+                          border: isSelected ? '1px solid rgba(255,255,255,0.1)' : '1px solid var(--border-color)',
+                          color: m.disabled ? 'var(--text-muted)' : isSelected ? '#ffffff' : 'var(--text-secondary)',
+                          padding: '10px',
+                          borderRadius: '10px',
+                          cursor: m.disabled ? 'not-allowed' : 'pointer',
+                          opacity: m.disabled ? 0.35 : 1,
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          transition: 'all var(--transition-fast)',
+                          boxShadow: isSelected ? '0 4px 12px var(--primary-glow)' : 'none',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected && !m.disabled) {
+                            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected && !m.disabled) {
+                            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)';
+                          }
+                        }}
+                      >
+                        {m.label} {m.disabled && '(Offline)'}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-            )}
 
-            {/* Action buttons */}
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-              <button
-                onClick={() => setShowCheckoutModal(false)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '10px 16px' }}
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleCheckoutSubmit}
-                style={{
-                  background: 'var(--success)',
-                  color: 'var(--text-primary)',
-                  border: 'none',
-                  padding: '10px 24px',
-                  borderRadius: 'var(--radius-sm)',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                }}
-              >
-                Bayar Lunas
-              </button>
+              {/* If Cash, Enter amount */}
+              {paymentMethod === 'cash' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 650, textTransform: 'uppercase', letterSpacing: '0.02em' }}>Uang Diterima</label>
+                  <input
+                    type="number"
+                    placeholder="Masukkan jumlah tunai..."
+                    value={amountPaid}
+                    onChange={(e) => setAmountPaid(e.target.value)}
+                    className="input-premium"
+                    style={{
+                      fontSize: '16px',
+                      fontWeight: '700',
+                    }}
+                  />
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '6px' }}>
+                    {[totals.grandTotal, 20000, 50000, 100000].map((quick) => (
+                      <button
+                        key={quick}
+                        onClick={() => setAmountPaid(String(Math.ceil(quick)))}
+                        style={{
+                          background: 'rgba(255,255,255,0.02)',
+                          border: '1px solid var(--border-color)',
+                          color: 'var(--text-secondary)',
+                          padding: '6px 12px',
+                          fontSize: '11px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontWeight: '600',
+                          transition: 'all var(--transition-fast)',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                          e.currentTarget.style.color = '#ffffff';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)';
+                          e.currentTarget.style.color = 'var(--text-secondary)';
+                        }}
+                      >
+                        {formatCurrency(Math.ceil(quick))}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
+                <button
+                  onClick={() => setShowCheckoutModal(false)}
+                  style={{ 
+                    background: 'transparent', 
+                    border: 'none', 
+                    color: 'var(--text-secondary)', 
+                    cursor: 'pointer', 
+                    padding: '10px 16px',
+                    fontWeight: '600',
+                    fontSize: '13px'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleCheckoutSubmit}
+                  className="btn-pill-primary"
+                  style={{
+                    background: 'var(--success)',
+                    boxShadow: '0 4px 20px rgba(16, 185, 129, 0.25)',
+                    padding: '10px 24px',
+                    fontSize: '13px',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#059669';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(16, 185, 129, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'var(--success)';
+                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(16, 185, 129, 0.25)';
+                  }}
+                >
+                  Bayar Lunas
+                  <span className="btn-icon-wrapper" style={{ background: 'rgba(255,255,255,0.2)' }}>✓</span>
+                </button>
+              </div>
+
             </div>
-
           </div>
         </div>
       )}
@@ -880,132 +1039,152 @@ export function Kasir() {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0,0,0,0.85)',
+            background: 'rgba(2, 3, 6, 0.9)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 101,
+            backdropFilter: 'blur(12px)',
           }}
         >
           <div
+            className="bezel-outer"
             style={{
-              background: '#ffffff',
-              color: '#333333',
-              padding: '24px',
-              width: '300px',
-              fontFamily: 'Courier New, Courier, monospace',
-              fontSize: '12px',
-              boxShadow: 'var(--shadow-lg)',
-              borderRadius: '4px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
+              padding: '8px',
+              animation: 'premium-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
             }}
           >
-            <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '14px', marginBottom: '8px' }}>
-              RESTO POS APP v1.1
-            </div>
-            <div style={{ textAlign: 'center', borderBottom: '1px dashed #333', paddingBottom: '8px', marginBottom: '8px' }}>
-              Ruko Kuliner Nusantara No. 12<br />
-              Tangerang, Indonesia
-            </div>
-            <div>
-              No: {printedReceipt.receiptNumber}<br />
-              Meja: {printedReceipt.tableNumber}<br />
-              Waktu: {printedReceipt.date} {printedReceipt.time}<br />
-            </div>
-            <div style={{ borderBottom: '1px dashed #333', paddingBottom: '8px', margin: '8px 0' }} />
-            
-            {/* Items */}
-            {printedReceipt.items.map((item: any, idx: number) => (
-              <div key={idx} style={{ marginBottom: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{item.menuItem.name}</span>
-                  <span>{item.quantity}x</span>
-                </div>
-                {item.selectedVariants.map((v: any) => (
-                  <div key={v.id} style={{ fontSize: '10px', color: '#666' }}>
-                    - {v.name}
+            <div
+              style={{
+                background: '#ffffff',
+                color: '#1e293b',
+                padding: '28px 24px',
+                width: '320px',
+                fontFamily: 'Courier New, Courier, monospace',
+                fontSize: '12.5px',
+                boxShadow: 'var(--shadow-lg)',
+                borderRadius: 'calc(var(--radius-lg) - 8px)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                lineHeight: 1.4,
+              }}
+            >
+              <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '15px', color: '#000000', marginBottom: '4px' }}>
+                RESTO POS APP v1.1
+              </div>
+              <div style={{ textAlign: 'center', borderBottom: '1px dashed #cbd5e1', paddingBottom: '10px', marginBottom: '8px', color: '#64748b' }}>
+                Ruko Kuliner Nusantara No. 12<br />
+                Tangerang, Indonesia
+              </div>
+              <div style={{ color: '#475569' }}>
+                No: {printedReceipt.receiptNumber}<br />
+                Meja: {printedReceipt.tableNumber}<br />
+                Waktu: {printedReceipt.date} {printedReceipt.time}<br />
+              </div>
+              <div style={{ borderBottom: '1px dashed #cbd5e1', paddingBottom: '4px', margin: '4px 0' }} />
+              
+              {/* Items */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {printedReceipt.items.map((item: any, idx: number) => (
+                  <div key={idx}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '600', color: '#0f172a' }}>
+                      <span>{item.menuItem.name}</span>
+                      <span>{item.quantity}x</span>
+                    </div>
+                    {item.selectedVariants.map((v: any) => (
+                      <div key={v.id} style={{ fontSize: '10.5px', color: '#64748b', paddingLeft: '8px' }}>
+                        ▪ {v.name}
+                      </div>
+                    ))}
+                    {item.selectedModifiers.map((m: any) => (
+                      <div key={m.id} style={{ fontSize: '10.5px', color: '#64748b', paddingLeft: '8px' }}>
+                        + {m.name} (+{formatCurrency(Number(m.priceDelta))})
+                      </div>
+                    ))}
+                    <div style={{ textAlign: 'right', fontWeight: '600', color: '#475569', fontSize: '12px' }}>
+                      {formatCurrency(item.lineTotal)}
+                    </div>
                   </div>
                 ))}
-                {item.selectedModifiers.map((m: any) => (
-                  <div key={m.id} style={{ fontSize: '10px', color: '#666' }}>
-                    - {m.name} (+{formatCurrency(Number(m.priceDelta))})
-                  </div>
-                ))}
-                <div style={{ textAlign: 'right', fontWeight: '600' }}>
-                  {formatCurrency(item.lineTotal)}
+              </div>
+
+              <div style={{ borderBottom: '1px dashed #cbd5e1', paddingBottom: '4px', margin: '4px 0' }} />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
+                <span>Subtotal:</span>
+                <span>{formatCurrency(printedReceipt.totals.subtotal)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
+                <span>Diskon:</span>
+                <span>-{formatCurrency(printedReceipt.totals.discountTotal)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
+                <span>Pajak (10%):</span>
+                <span>{formatCurrency(printedReceipt.totals.taxTotal)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13.5px', margin: '6px 0', color: '#000000', borderTop: '1px dashed #94a3b8', paddingTop: '8px' }}>
+                <span>TOTAL AKHIR:</span>
+                <span>{formatCurrency(printedReceipt.totals.grandTotal)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
+                <span>Bayar ({printedReceipt.paymentMethod.toUpperCase()}):</span>
+                <span>{formatCurrency(printedReceipt.cashPaid)}</span>
+              </div>
+              {printedReceipt.paymentMethod === 'cash' && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', color: '#0f172a' }}>
+                  <span>Kembalian:</span>
+                  <span>{formatCurrency(printedReceipt.cashPaid - printedReceipt.totals.grandTotal)}</span>
                 </div>
+              )}
+
+              <div style={{ borderBottom: '1px dashed #cbd5e1', paddingBottom: '10px', margin: '8px 0' }} />
+              <div style={{ textAlign: 'center', fontStyle: 'italic', marginTop: '4px', color: '#64748b' }}>
+                Terima Kasih atas Kunjungan Anda!
               </div>
-            ))}
-
-            <div style={{ borderBottom: '1px dashed #333', paddingBottom: '8px', margin: '8px 0' }} />
-
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Subtotal:</span>
-              <span>{formatCurrency(printedReceipt.totals.subtotal)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Diskon:</span>
-              <span>-{formatCurrency(printedReceipt.totals.discountTotal)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Pajak (10%):</span>
-              <span>{formatCurrency(printedReceipt.totals.taxTotal)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', margin: '4px 0' }}>
-              <span>TOTAL AKHIR:</span>
-              <span>{formatCurrency(printedReceipt.totals.grandTotal)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#555' }}>
-              <span>Bayar ({printedReceipt.paymentMethod.toUpperCase()}):</span>
-              <span>{formatCurrency(printedReceipt.cashPaid)}</span>
-            </div>
-            {printedReceipt.paymentMethod === 'cash' && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
-                <span>Kembalian:</span>
-                <span>{formatCurrency(printedReceipt.cashPaid - printedReceipt.totals.grandTotal)}</span>
+              
+              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                <button
+                  onClick={handlePrintReceipt}
+                  style={{
+                    flex: 1,
+                    background: '#10b981',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-sans)',
+                    fontWeight: '600',
+                    fontSize: '12px',
+                    transition: 'all var(--transition-fast)',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#059669'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = '#10b981'}
+                >
+                  Cetak Struk
+                </button>
+                <button
+                  onClick={() => setPrintedReceipt(null)}
+                  style={{
+                    flex: 1,
+                    background: '#64748b',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-sans)',
+                    fontWeight: '600',
+                    fontSize: '12px',
+                    transition: 'all var(--transition-fast)',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#475569'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = '#64748b'}
+                >
+                  Tutup
+                </button>
               </div>
-            )}
-
-            <div style={{ borderBottom: '1px dashed #333', paddingBottom: '8px', margin: '8px 0' }} />
-            <div style={{ textAlign: 'center', fontStyle: 'italic', marginTop: '8px' }}>
-              Terima Kasih atas Kunjungan Anda!
-            </div>
-            
-            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-              <button
-                onClick={handlePrintReceipt}
-                style={{
-                  flex: 1,
-                  background: '#10b981',
-                  color: '#ffffff',
-                  border: 'none',
-                  padding: '10px',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontFamily: 'sans-serif',
-                  fontWeight: '600',
-                }}
-              >
-                Cetak Struk
-              </button>
-              <button
-                onClick={() => setPrintedReceipt(null)}
-                style={{
-                  flex: 1,
-                  background: '#374151',
-                  color: '#ffffff',
-                  border: 'none',
-                  padding: '10px',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontFamily: 'sans-serif',
-                  fontWeight: '600',
-                }}
-              >
-                Tutup
-              </button>
             </div>
           </div>
         </div>

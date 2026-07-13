@@ -16,5 +16,7 @@ router.put('/change-password', authenticate, authController.changePassword);
 // Admin/Owner only
 router.get('/users', authenticate, authorize('owner', 'admin'), authController.listUsers);
 router.patch('/users/:id/toggle', authenticate, authorize('owner'), authController.toggleUser);
+// PIN update goes through a dedicated authenticated route — never via sync queue
+router.patch('/users/:id/set-pin', authenticate, authorize('owner', 'admin'), authController.setPin);
 
 export default router;

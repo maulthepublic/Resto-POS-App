@@ -32,227 +32,289 @@ export function Login() {
 
   return (
     <div
+      className="page-shell page-login"
       style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '100vh',
-        backgroundColor: 'var(--bg-main)',
-        padding: '20px',
+        minHeight: '100dvh',
+        backgroundColor: 'transparent',
+        padding: '24px',
+        position: 'relative',
+        zIndex: 1,
       }}
     >
+      <div className="bg-grid-overlay" />
+      
+      {/* Double Bezel Card Outer wrapper */}
       <div
+        className="bezel-outer"
         style={{
-          background: 'var(--bg-glass)',
-          border: '1px solid var(--border-color)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '40px',
           width: '100%',
-          maxWidth: '400px',
-          backdropFilter: 'blur(10px)',
+          maxWidth: '440px',
           boxShadow: 'var(--shadow-lg)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
+          animation: 'premium-fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both',
         }}
       >
-        <h1
+        {/* Double Bezel Card Inner wrapper */}
+        <div
+          className="bezel-inner"
           style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '28px',
-            color: 'var(--primary)',
-            marginBottom: '4px',
-            textAlign: 'center',
+            padding: '40px 32px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            background: 'rgba(10, 16, 30, 0.75)',
+            backdropFilter: 'blur(20px)',
           }}
         >
-          RESTO POS
-        </h1>
-        <p
-          style={{
-            color: 'var(--text-secondary)',
-            fontSize: '14px',
-            marginBottom: '32px',
-            textAlign: 'center',
-          }}
-        >
-          Masukkan PIN Staf Anda untuk Masuk
-        </p>
-
-        {/* Display dots for code */}
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-          {[0, 1, 2, 3].map((index) => (
-            <div
-              key={index}
-              style={{
-                width: '16px',
-                height: '16px',
-                borderRadius: '50%',
-                border: '2px solid var(--primary)',
-                backgroundColor:
-                  pin.length > index ? 'var(--primary)' : 'transparent',
-                boxShadow:
-                  pin.length > index ? '0 0 10px var(--primary)' : 'none',
-                transition: 'all 0.15s ease',
-              }}
-            />
-          ))}
-        </div>
-
-        {error && (
-          <p
+          <div className="badge-eyebrow" style={{ marginBottom: '16px' }}>SECURE ACCESS</div>
+          
+          <h1
             style={{
-              color: 'var(--danger)',
-              fontSize: '13px',
-              marginBottom: '20px',
+              fontFamily: 'var(--font-display)',
+              fontSize: '32px',
+              fontWeight: 700,
+              background: 'linear-gradient(to right, #ffffff, var(--primary))',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              marginBottom: '8px',
               textAlign: 'center',
-              fontWeight: '500',
+              letterSpacing: '-0.02em',
             }}
           >
-            {error}
+            RESTO POS
+          </h1>
+          
+          <p
+            style={{
+              color: 'var(--text-secondary)',
+              fontSize: '13px',
+              marginBottom: '32px',
+              textAlign: 'center',
+            }}
+          >
+            Masukkan PIN Staf Anda untuk Masuk
           </p>
-        )}
 
-        {/* PIN Pad Grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '16px',
-            width: '100%',
-            marginBottom: '32px',
-          }}
-        >
-          {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((num) => (
+          {/* Display dots for code */}
+          <div style={{ display: 'flex', gap: '20px', marginBottom: '32px' }}>
+            {[0, 1, 2, 3].map((index) => {
+              const isFilled = pin.length > index;
+              return (
+                <div
+                  key={index}
+                  style={{
+                    width: '14px',
+                    height: '14px',
+                    borderRadius: '50%',
+                    border: isFilled ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.15)',
+                    backgroundColor: isFilled ? 'var(--primary)' : 'transparent',
+                    boxShadow: isFilled ? '0 0 12px var(--primary-glow), 0 0 4px var(--primary)' : 'none',
+                    transition: 'all var(--transition-fast)',
+                    transform: isFilled ? 'scale(1.15)' : 'scale(1)',
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          {error && (
+            <p
+              style={{
+                color: 'var(--danger)',
+                fontSize: '13px',
+                marginBottom: '24px',
+                textAlign: 'center',
+                fontWeight: '600',
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.15)',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                width: '100%',
+              }}
+            >
+              {error}
+            </p>
+          )}
+
+          {/* PIN Pad Grid */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '20px',
+              width: '100%',
+              marginBottom: '36px',
+            }}
+          >
+            {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((num) => (
+              <button
+                key={num}
+                onClick={() => handleKeyPress(num)}
+                disabled={loading}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                  color: 'var(--text-primary)',
+                  fontSize: '24px',
+                  fontWeight: '600',
+                  height: '72px',
+                  width: '72px',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto',
+                  boxShadow: 'var(--shadow-sm)',
+                  transition: 'all var(--transition-fast)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
+                  e.currentTarget.style.borderColor = 'var(--primary)';
+                  e.currentTarget.style.boxShadow = '0 0 16px var(--primary-glow)';
+                  e.currentTarget.style.transform = 'translateY(-1.5px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                  e.currentTarget.style.transform = 'none';
+                }}
+              >
+                {num}
+              </button>
+            ))}
             <button
-              key={num}
-              onClick={() => handleKeyPress(num)}
+              onClick={handleClear}
               disabled={loading}
               style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-secondary)',
+                fontSize: '13px',
+                fontWeight: '600',
+                height: '72px',
+                cursor: 'pointer',
+                transition: 'color var(--transition-fast)',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => handleKeyPress('0')}
+              disabled={loading}
+              style={{
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
                 color: 'var(--text-primary)',
                 fontSize: '24px',
                 fontWeight: '600',
-                height: '70px',
+                height: '72px',
+                width: '72px',
                 borderRadius: '50%',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                margin: '0 auto',
+                boxShadow: 'var(--shadow-sm)',
                 transition: 'all var(--transition-fast)',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-card-hover)';
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
                 e.currentTarget.style.borderColor = 'var(--primary)';
+                e.currentTarget.style.boxShadow = '0 0 16px var(--primary-glow)';
+                e.currentTarget.style.transform = 'translateY(-1.5px)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-card)';
-                e.currentTarget.style.borderColor = 'var(--border-color)';
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                e.currentTarget.style.transform = 'none';
               }}
             >
-              {num}
+              0
             </button>
-          ))}
-          <button
-            onClick={handleClear}
-            disabled={loading}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-muted)',
-              fontSize: '14px',
-              fontWeight: '600',
-              height: '70px',
-              cursor: 'pointer',
-            }}
-          >
-            Clear
-          </button>
-          <button
-            onClick={() => handleKeyPress('0')}
-            disabled={loading}
-            style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)',
-              fontSize: '24px',
-              fontWeight: '600',
-              height: '70px',
-              borderRadius: '50%',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all var(--transition-fast)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-card-hover)';
-              e.currentTarget.style.borderColor = 'var(--primary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-card)';
-              e.currentTarget.style.borderColor = 'var(--border-color)';
-            }}
-          >
-            0
-          </button>
-          <button
-            onClick={handleBackspace}
-            disabled={loading}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-muted)',
-              fontSize: '14px',
-              fontWeight: '600',
-              height: '70px',
-              cursor: 'pointer',
-            }}
-          >
-            ⌫
-          </button>
-        </div>
+            <button
+              onClick={handleBackspace}
+              disabled={loading}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-secondary)',
+                fontSize: '18px',
+                fontWeight: '600',
+                height: '72px',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#ffffff';
+                e.currentTarget.style.transform = 'translateX(-1.5px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'var(--text-secondary)';
+                e.currentTarget.style.transform = 'none';
+              }}
+            >
+              ⌫
+            </button>
+          </div>
 
-        {/* PIN Info Hints */}
-        <div
-          style={{
-            borderTop: '1px solid var(--border-color)',
-            paddingTop: '20px',
-            width: '100%',
-          }}
-        >
-          <p
-            style={{
-              fontSize: '11px',
-              color: 'var(--text-muted)',
-              marginBottom: '8px',
-              textAlign: 'center',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}
-          >
-            Akun Demo Karyawan:
-          </p>
+          {/* PIN Info Hints */}
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '8px',
-              fontSize: '12px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+              paddingTop: '24px',
+              width: '100%',
             }}
           >
-            <div style={{ color: 'var(--text-secondary)' }}>
-              <strong>1234</strong>: Budi (Owner)
-            </div>
-            <div style={{ color: 'var(--text-secondary)' }}>
-              <strong>1111</strong>: Siti (Kasir)
-            </div>
-            <div style={{ color: 'var(--text-secondary)' }}>
-              <strong>2222</strong>: Agus (Chef)
-            </div>
-            <div style={{ color: 'var(--text-secondary)' }}>
-              <strong>3333</strong>: Rudi (Admin)
+            <p
+              style={{
+                fontSize: '10px',
+                color: 'var(--text-muted)',
+                marginBottom: '12px',
+                textAlign: 'center',
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                fontWeight: 700,
+              }}
+            >
+              Akun Demo Karyawan:
+            </p>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '10px 16px',
+                fontSize: '12px',
+              }}
+            >
+              <div style={{ color: 'var(--text-secondary)', display: 'flex', gap: '6px' }}>
+                <strong style={{ color: '#ffffff' }}>1234</strong>
+                <span style={{ color: 'var(--text-muted)' }}>:</span>
+                <span>Budi (Owner)</span>
+              </div>
+              <div style={{ color: 'var(--text-secondary)', display: 'flex', gap: '6px' }}>
+                <strong style={{ color: '#ffffff' }}>1111</strong>
+                <span style={{ color: 'var(--text-muted)' }}>:</span>
+                <span>Siti (Kasir)</span>
+              </div>
+              <div style={{ color: 'var(--text-secondary)', display: 'flex', gap: '6px' }}>
+                <strong style={{ color: '#ffffff' }}>2222</strong>
+                <span style={{ color: 'var(--text-muted)' }}>:</span>
+                <span>Agus (Chef)</span>
+              </div>
+              <div style={{ color: 'var(--text-secondary)', display: 'flex', gap: '6px' }}>
+                <strong style={{ color: '#ffffff' }}>3333</strong>
+                <span style={{ color: 'var(--text-muted)' }}>:</span>
+                <span>Rudi (Admin)</span>
+              </div>
             </div>
           </div>
         </div>

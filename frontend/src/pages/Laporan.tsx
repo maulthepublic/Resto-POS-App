@@ -169,29 +169,32 @@ export function Laporan() {
   if (!reportData) return <div style={{ color: 'var(--text-muted)' }}>Memuat laporan...</div>;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="page-shell page-laporan" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       
       {/* Filters & Export Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="bento-grid-split">
         <div>
-          <h3>Laporan & Analisis Finansial</h3>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+          <div className="badge-eyebrow" style={{ marginBottom: '8px' }}>Z REPORT</div>
+          <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff' }}>Laporan & Analisis Finansial</h3>
+          <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', marginTop: '4px' }}>
             Pantau ringkasan margin keuntungan kotor dan rekapitulasi harian Z-Report.
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <select
             value={filterRange}
             onChange={(e) => setFilterRange(e.target.value)}
+            className="input-premium"
             style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)',
-              padding: '10px 16px',
-              borderRadius: 'var(--radius-sm)',
-              outline: 'none',
+              width: '160px',
               cursor: 'pointer',
+              appearance: 'none',
+              backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E")',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 12px center',
+              backgroundSize: '14px',
+              paddingRight: '36px'
             }}
           >
             <option value="today">Hari Ini</option>
@@ -201,108 +204,124 @@ export function Laporan() {
 
           <button
             onClick={handleExport}
+            className="btn-pill-primary"
             style={{
-              background: 'var(--primary)',
-              color: 'var(--text-primary)',
-              border: 'none',
-              padding: '10px 16px',
-              borderRadius: 'var(--radius-sm)',
-              fontWeight: '600',
-              cursor: 'pointer',
+              padding: '10px 20px',
+              fontSize: '13px',
             }}
           >
-            Ekspor Laporan (PDF/Excel)
+            Ekspor Laporan (CSV)
+            <span className="btn-icon-wrapper">↓</span>
           </button>
         </div>
       </div>
 
       {/* Main KPI Stats Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
-        <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Total Pendapatan Kotor</span>
-          <h3 style={{ fontSize: '24px', color: 'var(--text-primary)', marginTop: '4px' }}>{formatCurrency(reportData.grossSales)}</h3>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Dari {reportData.ordersCount} transaksi</span>
+      <div 
+        style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(4, 1fr)', 
+          gap: '20px' 
+        }}
+        className="bento-grid-split"
+      >
+        <div className="bezel-outer">
+          <div className="bezel-inner" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '128px' }}>
+            <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Total Pendapatan Kotor</span>
+            <h3 style={{ fontSize: '24px', color: '#ffffff', marginTop: '8px', fontWeight: 700 }}>{formatCurrency(reportData.grossSales)}</h3>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>Dari {reportData.ordersCount} transaksi</span>
+          </div>
         </div>
-        <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Total HPP Menu Terjual</span>
-          <h3 style={{ fontSize: '24px', color: 'var(--warning)', marginTop: '4px' }}>{formatCurrency(reportData.totalHpp)}</h3>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>HPP teoritis berdasarkan resep BOM</span>
+        <div className="bezel-outer">
+          <div className="bezel-inner" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '128px' }}>
+            <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Total HPP Menu Terjual</span>
+            <h3 style={{ fontSize: '24px', color: 'var(--warning)', marginTop: '8px', fontWeight: 700 }}>{formatCurrency(reportData.totalHpp)}</h3>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>HPP teoritis dari BOM resep</span>
+          </div>
         </div>
-        <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Biaya Operasional</span>
-          <h3 style={{ fontSize: '24px', color: 'var(--danger)', marginTop: '4px' }}>{formatCurrency(reportData.manualExpenses)}</h3>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Kas keluar petty cash</span>
+        <div className="bezel-outer">
+          <div className="bezel-inner" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '128px' }}>
+            <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Biaya Operasional</span>
+            <h3 style={{ fontSize: '24px', color: 'var(--danger)', marginTop: '8px', fontWeight: 700 }}>{formatCurrency(reportData.manualExpenses)}</h3>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>Kas keluar petty cash</span>
+          </div>
         </div>
-        <div style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '20px', background: 'linear-gradient(135deg, var(--bg-card), var(--primary-glow))' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-primary)' }}>Estimasi Profit Bersih</span>
-          <h3 style={{ fontSize: '24px', color: 'var(--success)', marginTop: '4px' }}>{formatCurrency(reportData.netProfitMargin)}</h3>
-          <span style={{ fontSize: '11px', color: 'var(--text-primary)', opacity: 0.7 }}>Revenue - HPP - Petty Cash</span>
+        <div className="bezel-outer" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(255, 255, 255, 0.01))', borderColor: 'rgba(16, 185, 129, 0.25)' }}>
+          <div className="bezel-inner" style={{ padding: '20px', background: 'transparent', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '128px', border: 'none' }}>
+            <span style={{ fontSize: '11.5px', color: 'var(--success)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Estimasi Profit Bersih</span>
+            <h3 style={{ fontSize: '24px', color: 'var(--success)', marginTop: '8px', fontWeight: 700 }}>{formatCurrency(reportData.netProfitMargin)}</h3>
+            <span style={{ fontSize: '11px', color: 'var(--success)', opacity: 0.8, marginTop: '4px', display: 'block' }}>Revenue - HPP - Petty Cash</span>
+          </div>
         </div>
       </div>
 
       {/* Margin and Payment Analysis */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }} className="bento-grid-split">
         
         {/* Margin Analysis card */}
-        <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '24px' }}>
-          <h3 style={{ fontSize: '18px', marginBottom: '20px' }}>Ringkasan Margin Kotor Harian</h3>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-              <span>Total Penjualan Bersih:</span>
-              <strong style={{ color: 'var(--success)' }}>{formatCurrency(reportData.grossSales - reportData.taxCollected)}</strong>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-              <span>Estimasi Beban Bahan Baku (HPP):</span>
-              <strong style={{ color: 'var(--warning)' }}>-{formatCurrency(reportData.totalHpp)}</strong>
-            </div>
-            <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)' }} />
+        <div className="bezel-outer">
+          <div className="bezel-inner" style={{ padding: '24px' }}>
+            <h3 style={{ fontSize: '16.5px', fontWeight: 700, color: '#ffffff', marginBottom: '20px' }}>Ringkasan Margin Kotor</h3>
             
-            {/* Profit Margin Indicator */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Margin Keuntungan Kotor Proyeksi</span>
-                <h4 style={{ fontSize: '22px', color: 'var(--primary)' }}>
-                  {reportData.grossSales > 0
-                    ? (((reportData.grossSales - reportData.totalHpp) / reportData.grossSales) * 100).toFixed(1)
-                    : '0.0'}%
-                </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13.5px' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Total Penjualan Bersih:</span>
+                <strong style={{ color: '#ffffff' }}>{formatCurrency(reportData.grossSales - reportData.taxCollected)}</strong>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Laba Kotor</span>
-                <h4 style={{ fontSize: '22px', color: 'var(--success)' }}>
-                  {formatCurrency(reportData.grossSales - reportData.totalHpp)}
-                </h4>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13.5px' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Estimasi Beban Bahan Baku (HPP):</span>
+                <strong style={{ color: 'var(--warning)' }}>-{formatCurrency(reportData.totalHpp)}</strong>
+              </div>
+              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', margin: '4px 0' }} />
+              
+              {/* Profit Margin Indicator */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                <div>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>Margin Keuntungan Kotor Proyeksi</span>
+                  <h4 style={{ fontSize: '22px', color: 'var(--primary-hover)', fontWeight: 750, marginTop: '4px' }}>
+                    {reportData.grossSales > 0
+                      ? (((reportData.grossSales - reportData.totalHpp) / reportData.grossSales) * 100).toFixed(1)
+                      : '0.0'}%
+                  </h4>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>Laba Kotor</span>
+                  <h4 style={{ fontSize: '22px', color: 'var(--success)', fontWeight: 750, marginTop: '4px' }}>
+                    {formatCurrency(reportData.grossSales - reportData.totalHpp)}
+                  </h4>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Z-Report payment details */}
-        <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '24px' }}>
-          <h3 style={{ fontSize: '18px', marginBottom: '20px' }}>Z-Report Rekonsiliasi Kas & QRIS</h3>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Uang Tunai di Laci Kasir:</span>
-              <strong>{formatCurrency(reportData.paymentMethods.cash)}</strong>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Uang Masuk QRIS Statis:</span>
-              <strong>{formatCurrency(reportData.paymentMethods.static_qris)}</strong>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Uang Masuk QRIS Dinamis:</span>
-              <strong>{formatCurrency(reportData.paymentMethods.dynamic_qris)}</strong>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>E-Wallet / EDC Debit / Kartu:</span>
-              <strong>{formatCurrency(reportData.paymentMethods.ewallet + reportData.paymentMethods.debit_credit)}</strong>
-            </div>
-            <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 'bold' }}>
-              <span>Total Uang Masuk Bersih (Nett):</span>
-              <span>{formatCurrency(reportData.grossSales)}</span>
+        <div className="bezel-outer">
+          <div className="bezel-inner" style={{ padding: '24px' }}>
+            <h3 style={{ fontSize: '16.5px', fontWeight: 700, color: '#ffffff', marginBottom: '20px' }}>Z-Report Rekonsiliasi Kas & QRIS</h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Uang Tunai di Laci Kasir:</span>
+                <strong style={{ color: '#ffffff' }}>{formatCurrency(reportData.paymentMethods.cash)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Uang Masuk QRIS Statis:</span>
+                <strong style={{ color: '#ffffff' }}>{formatCurrency(reportData.paymentMethods.static_qris)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Uang Masuk QRIS Dinamis:</span>
+                <strong style={{ color: '#ffffff' }}>{formatCurrency(reportData.paymentMethods.dynamic_qris)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>E-Wallet / EDC Debit / Kartu:</span>
+                <strong style={{ color: '#ffffff' }}>{formatCurrency(reportData.paymentMethods.ewallet + reportData.paymentMethods.debit_credit)}</strong>
+              </div>
+              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', margin: '4px 0' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: '700', color: 'var(--success)', paddingTop: '4px' }}>
+                <span>Total Uang Masuk Bersih (Nett):</span>
+                <span>{formatCurrency(reportData.grossSales)}</span>
+              </div>
             </div>
           </div>
         </div>

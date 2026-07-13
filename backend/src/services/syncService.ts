@@ -154,7 +154,7 @@ async function handleMenuItem(item: SyncMutationItem): Promise<void> {
     await prisma.menuItem.update({
       where: { id: item.entityId },
       data: { isActive: false },
-    });
+    }).catch(() => null);
   }
 }
 
@@ -186,7 +186,7 @@ async function handleRawMaterial(item: SyncMutationItem): Promise<void> {
       data: { ...p, updatedAt: new Date() },
     });
   } else if (item.operation === 'delete') {
-    await prisma.rawMaterial.delete({ where: { id: item.entityId } });
+    await prisma.rawMaterial.delete({ where: { id: item.entityId } }).catch(() => null);
   }
 }
 
@@ -203,8 +203,200 @@ async function handleRecipe(item: SyncMutationItem): Promise<void> {
         quantity: p.quantity,
       },
     });
+  } else if (item.operation === 'update') {
+    await prisma.recipe.update({
+      where: { id: item.entityId },
+      data: {
+        quantity: p.quantity !== undefined ? p.quantity : undefined,
+      },
+    });
   } else if (item.operation === 'delete') {
     await prisma.recipe.delete({ where: { id: item.entityId } }).catch(() => null);
+  }
+}
+
+async function handleUser(item: SyncMutationItem): Promise<void> {
+  const p = item.payload as any;
+  const userData = p.user ?? p;
+
+  if (item.operation === 'insert') {
+    await prisma.user.upsert({
+      where: { id: item.entityId },
+      update: {
+        name: userData.name,
+        role: userData.role,
+        isActive: userData.isActive ?? true,
+        updatedAt: new Date(),
+      },
+      create: {
+        id: item.entityId,
+        name: userData.name,
+        // Email diisi kosong bila tidak ada — backend tidak wajib punya email
+        email: userData.email ?? null,
+        // PIN tidak di-sync lewat queue karena harus di-hash. Gunakan authService untuk update PIN.
+        passwordHash: '', // placeholder, tidak bisa login lewat password tanpa set via authService
+        pinHash: null,
+        role: userData.role,
+        isActive: userData.isActive ?? true,
+      },
+    });
+  } else if (item.operation === 'update') {
+    await prisma.user.update({
+      where: { id: item.entityId },
+      data: {
+        name: userData.name ?? undefined,
+        role: userData.role ?? undefined,
+        isActive: userData.isActive ?? undefined,
+        updatedAt: new Date(),
+      },
+    });
+  } else if (item.operation === 'delete') {
+    // Soft-delete: nonaktifkan user daripada hapus
+    await prisma.user.update({
+      where: { id: item.entityId },
+      data: { isActive: false },
+    }).catch(() => null); // Abaikan bila user tidak ditemukan
+  }
+}
+
+async function handleCategory(item: SyncMutationItem): Promise<void> {
+  const p = item.payload as any;
+  const catData = p.category ?? p;
+
+  if (item.operation === 'insert') {
+    await prisma.category.upsert({
+      where: { id: item.entityId },
+      update: {
+        name: catData.name,
+        sortOrder: catData.sortOrder ?? 0,
+        isActive: catData.isActive ?? true,
+        updatedAt: new Date(),
+      },
+      create: {
+        id: item.entityId,
+        name: catData.name,
+        sortOrder: catData.sortOrder ?? 0,
+        isActive: catData.isActive ?? true,
+      },
+    });
+  } else if (item.operation === 'update') {
+    await prisma.category.update({
+      where: { id: item.entityId },
+      data: {
+        name: catData.name ?? undefined,
+        sortOrder: catData.sortOrder ?? undefined,
+        isActive: catData.isActive ?? undefined,
+        updatedAt: new Date(),
+      },
+    });
+  } else if (item.operation === 'delete') {
+    await prisma.category.update({
+      where: { id: item.entityId },
+      data: { isActive: false },
+    }).catch(() => null);
+  }
+}
+
+async function handleModifier(item: SyncMutationItem): Promise<void> {
+  const p = item.payload as any;
+  const modData = p.modifier ?? p;
+
+  if (item.operation === 'insert') {
+    await prisma.modifier.upsert({
+      where: { id: item.entityId },
+      update: {
+        name: modData.name,
+        priceDelta: modData.priceDelta ?? 0,
+        isActive: modData.isActive ?? true,
+      },
+      create: {
+        id: item.entityId,
+        name: modData.name,
+        priceDelta: modData.priceDelta ?? 0,
+        isActive: modData.isActive ?? true,
+      },
+    });
+  } else if (item.operation === 'update') {
+    await prisma.modifier.update({
+      where: { id: item.entityId },
+      data: {
+        name: modData.name ?? undefined,
+        priceDelta: modData.priceDelta ?? undefined,
+        isActive: modData.isActive ?? undefined,
+      },
+    });
+  } else if (item.operation === 'delete') {
+    await prisma.modifier.delete({ where: { id: item.entityId } }).catch(() => null);
+  }
+}
+
+async function handleVariantGroup(item: SyncMutationItem): Promise<void> {
+  const p = item.payload as any;
+  const vgData = p.variantGroup ?? p;
+
+  if (item.operation === 'insert') {
+    await prisma.variantGroup.upsert({
+      where: { id: item.entityId },
+      update: {
+        name: vgData.name,
+        isRequired: vgData.isRequired ?? false,
+        maxSelected: vgData.maxSelected ?? 1,
+      },
+      create: {
+        id: item.entityId,
+        menuItemId: vgData.menuItemId,
+        name: vgData.name,
+        isRequired: vgData.isRequired ?? false,
+        maxSelected: vgData.maxSelected ?? 1,
+      },
+    });
+  } else if (item.operation === 'update') {
+    await prisma.variantGroup.update({
+      where: { id: item.entityId },
+      data: {
+        name: vgData.name ?? undefined,
+        isRequired: vgData.isRequired ?? undefined,
+        maxSelected: vgData.maxSelected ?? undefined,
+      },
+    });
+  } else if (item.operation === 'delete') {
+    // Cascade delete is handled by PostgreSQL (onDelete: Cascade on Variant).
+    // Soft-delete is not applicable here — a deleted group means the variants are gone too.
+    await prisma.variantGroup.delete({ where: { id: item.entityId } }).catch(() => null);
+  }
+}
+
+async function handleVariant(item: SyncMutationItem): Promise<void> {
+  const p = item.payload as any;
+  const varData = p.variant ?? p;
+
+  if (item.operation === 'insert') {
+    await prisma.variant.upsert({
+      where: { id: item.entityId },
+      update: {
+        name: varData.name,
+        priceDelta: varData.priceDelta ?? 0,
+        isActive: varData.isActive ?? true,
+      },
+      create: {
+        id: item.entityId,
+        variantGroupId: varData.variantGroupId,
+        name: varData.name,
+        priceDelta: varData.priceDelta ?? 0,
+        isActive: varData.isActive ?? true,
+      },
+    });
+  } else if (item.operation === 'update') {
+    await prisma.variant.update({
+      where: { id: item.entityId },
+      data: {
+        name: varData.name ?? undefined,
+        priceDelta: varData.priceDelta ?? undefined,
+        isActive: varData.isActive ?? undefined,
+      },
+    });
+  } else if (item.operation === 'delete') {
+    await prisma.variant.delete({ where: { id: item.entityId } }).catch(() => null);
   }
 }
 
@@ -212,14 +404,19 @@ async function handleRecipe(item: SyncMutationItem): Promise<void> {
 
 export async function processMutation(item: SyncMutationItem): Promise<void> {
   switch (item.entityType) {
-    case 'order':        return handleOrder(item);
+    case 'order':         return handleOrder(item);
     case 'stockMovement': return handleStockMovement(item);
     case 'financeLedger': return handleFinanceLedger(item);
-    case 'menuItem':     return handleMenuItem(item);
-    case 'rawMaterial':  return handleRawMaterial(item);
-    case 'recipe':       return handleRecipe(item);
+    case 'menuItem':      return handleMenuItem(item);
+    case 'rawMaterial':   return handleRawMaterial(item);
+    case 'recipe':        return handleRecipe(item);
+    case 'user':          return handleUser(item);
+    case 'category':      return handleCategory(item);
+    case 'modifier':      return handleModifier(item);
+    case 'variantGroup':  return handleVariantGroup(item);
+    case 'variant':       return handleVariant(item);
     default:
-      throw new Error(`Unknown entityType: ${item.entityType}`);
+      throw new Error(`Unknown entityType: ${(item as any).entityType}`);
   }
 }
 

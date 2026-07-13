@@ -18,6 +18,19 @@ function App() {
   const { isOffline, toggleNetwork, syncQueueCount, updateSyncQueueCount } = useNetworkStore();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [dbReady, setDbReady] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const saved = localStorage.getItem('resto_pos_theme');
+    return (saved as 'dark' | 'light') || 'dark';
+  });
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.body.classList.add('light-mode');
+    } else {
+      document.body.classList.remove('light-mode');
+    }
+    localStorage.setItem('resto_pos_theme', theme);
+  }, [theme]);
 
   // 1. Initial Seeder & Session Check
   useEffect(() => {
@@ -61,7 +74,16 @@ function App() {
 
   if (!dbReady) {
     return (
-      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)' }}>
+      <div
+        className="page-shell page-login"
+        style={{
+          display: 'flex',
+          minHeight: '100dvh',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--bg-main)',
+        }}
+      >
         <p style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-display)', fontSize: '18px' }}>
           Menyiapkan database lokal (IndexedDB)...
         </p>
@@ -103,70 +125,129 @@ function App() {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-main)', color: 'var(--text-primary)' }}>
+    <div
+      className="app-shell"
+      style={{
+        display: 'flex',
+        minHeight: '100dvh',
+        background: 'var(--bg-main)',
+        color: 'var(--text-primary)',
+      }}
+    >
+      {/* Background grid overlay */}
+      <div className="bg-grid-overlay" />
       
       {/* Sidebar navigation */}
       <aside
+        className="sidebar-shell"
         style={{
-          width: '260px',
-          backgroundColor: 'var(--bg-card)',
+          width: '280px',
+          backgroundColor: 'var(--bg-glass)',
+          backdropFilter: 'blur(24px)',
           borderRight: '1px solid var(--border-color)',
-          padding: '24px',
+          padding: '32px 24px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          gap: '24px',
+          gap: '32px',
+          boxShadow: 'var(--shadow-md)',
+          position: 'relative',
+          zIndex: 10,
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
           {/* Brand header */}
-          <div>
-            <h2 style={{ color: 'var(--primary)', fontFamily: 'var(--font-display)', fontSize: '24px', letterSpacing: '-0.02em' }}>
+          <div className="brand-lockup">
+            <h2 style={{ 
+              color: 'var(--text-primary)', 
+              fontFamily: 'var(--font-display)', 
+              fontSize: '26px', 
+              letterSpacing: '-0.02em', 
+              fontWeight: 700,
+              background: 'linear-gradient(to right, var(--text-primary), var(--primary))',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>
               Resto POS
             </h2>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--success)' }} />
-              <span style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '500' }}>
-                {currentUser.name} ({currentUser.role.toUpperCase()})
+            <div style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              marginTop: '12px',
+              padding: '6px 12px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.05)',
+              borderRadius: '999px'
+            }}>
+              <span className="status-badge-pulse" style={{ 
+                width: '6px', 
+                height: '6px', 
+                borderRadius: '50%', 
+                backgroundColor: 'var(--success)',
+                color: 'var(--success)'
+              }} />
+              <span style={{ color: 'var(--text-secondary)', fontSize: '11px', fontWeight: '600', letterSpacing: '0.02em' }}>
+                {currentUser.name} <span style={{ color: 'var(--text-muted)', fontSize: '9px', marginLeft: '2px' }}>({currentUser.role.toUpperCase()})</span>
               </span>
             </div>
           </div>
 
           {/* Navigation links filtered by RBAC */}
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {navigationItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                style={{
-                  background: activeTab === item.id ? 'var(--primary)' : 'transparent',
-                  color: activeTab === item.id ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  border: 'none',
-                  padding: '12px 16px',
-                  borderRadius: 'var(--radius-sm)',
-                  textAlign: 'left',
-                  fontFamily: 'var(--font-sans)',
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  transition: 'all var(--transition-fast)',
-                  fontWeight: activeTab === item.id ? '600' : '400',
-                }}
-                onMouseEnter={(e) => {
-                  if (activeTab !== item.id) {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-card-hover)';
-                    e.currentTarget.style.color = 'var(--text-primary)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeTab !== item.id) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = 'var(--text-secondary)';
-                  }
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
+            {navigationItems.map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  style={{
+                    background: isActive ? 'linear-gradient(135deg, var(--primary), #4f46e5)' : 'transparent',
+                    color: isActive ? '#ffffff' : 'var(--text-secondary)',
+                    border: isActive ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid transparent',
+                    padding: '12px 18px',
+                    borderRadius: '14px',
+                    textAlign: 'left',
+                    fontFamily: 'var(--font-sans)',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)',
+                    fontWeight: isActive ? '600' : '500',
+                    boxShadow: isActive ? '0 8px 24px rgba(99, 102, 241, 0.3)' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.backgroundColor = 'var(--bg-card)';
+                      e.currentTarget.style.borderColor = 'var(--border-color)';
+                      e.currentTarget.style.color = 'var(--text-primary)';
+                      e.currentTarget.style.transform = 'translateX(2px)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.borderColor = 'transparent';
+                      e.currentTarget.style.color = 'var(--text-secondary)';
+                      e.currentTarget.style.transform = 'none';
+                    }
+                  }}
+                >
+                  <span>{item.label}</span>
+                  {isActive && (
+                    <span style={{ 
+                      fontSize: '11px', 
+                      backgroundColor: 'rgba(255, 255, 255, 0.18)', 
+                      padding: '2px 6px', 
+                      borderRadius: '6px',
+                      fontWeight: 700 
+                    }}>•</span>
+                  )}
+                </button>
+              );
+            })}
           </nav>
         </div>
 
@@ -174,73 +255,91 @@ function App() {
         <button
           onClick={logout}
           style={{
-            background: 'rgba(239, 68, 68, 0.1)',
+            background: 'rgba(239, 68, 68, 0.06)',
             color: 'var(--danger)',
-            border: '1px solid rgba(239, 68, 68, 0.2)',
-            padding: '12px',
-            borderRadius: 'var(--radius-sm)',
+            border: '1px solid rgba(239, 68, 68, 0.15)',
+            padding: '12px 18px',
+            borderRadius: '14px',
             cursor: 'pointer',
             fontWeight: '600',
             fontFamily: 'var(--font-sans)',
-            transition: 'background var(--transition-fast)',
+            fontSize: '13px',
+            transition: 'all var(--transition-fast)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)')}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
+            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.06)';
+            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.15)';
+            e.currentTarget.style.transform = 'none';
+          }}
         >
           Keluar (Logout)
         </button>
       </aside>
 
       {/* Main Area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      <div className="main-shell" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
         
         {/* Connection & Status Banner */}
         <header
+          className="topbar-shell"
           style={{
-            height: '70px',
-            backgroundColor: 'var(--bg-card)',
+            height: '82px',
+            backgroundColor: 'var(--bg-glass)',
+            backdropFilter: 'blur(20px)',
             borderBottom: '1px solid var(--border-color)',
             padding: '0 40px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            boxShadow: 'var(--shadow-sm)',
+            zIndex: 5,
           }}
         >
           {/* Left: Active Module Name */}
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '20px', textTransform: 'capitalize' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '22px', textTransform: 'capitalize', letterSpacing: '-0.01em', fontWeight: 650 }}>
             {activeTab === 'dapur' ? 'Dapur (KDS)' : activeTab === 'cms' ? 'Admin Panel' : activeTab}
           </h2>
 
           {/* Right: Network status simulator and sync queue count */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
             
             {/* Sync Queue Badge indicator */}
             {syncQueueCount > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span
                   style={{
-                    backgroundColor: 'var(--warning)',
-                    color: '#222',
-                    padding: '4px 8px',
-                    borderRadius: '12px',
-                    fontSize: '11px',
-                    fontWeight: '700',
+                    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                    border: '1px solid rgba(245, 158, 11, 0.25)',
+                    color: 'var(--warning)',
+                    padding: '6px 14px',
+                    borderRadius: '999px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
                     animation: 'pulse 2s infinite',
                   }}
                 >
+                  <span className="status-badge-pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--warning)', color: 'var(--warning)' }} />
                   {syncQueueCount} Data Menunggu Sync
                 </span>
                 {!isOffline && (
                   <button
                     onClick={handleForceSyncSimulation}
+                    className="btn-pill-secondary"
                     style={{
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid var(--border-color)',
-                      color: 'var(--text-primary)',
-                      padding: '4px 10px',
-                      borderRadius: '4px',
-                      fontSize: '11px',
-                      cursor: 'pointer',
+                      padding: '8px 16px',
+                      fontSize: '12px',
                     }}
                   >
                     Sync Sekarang
@@ -250,18 +349,27 @@ function App() {
             )}
 
             {/* Simulated status indicator */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '10px',
+              padding: '6px 14px',
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid rgba(255, 255, 255, 0.05)',
+              borderRadius: '999px'
+            }}>
               <span
+                className="status-badge-pulse"
                 style={{
-                  width: '10px',
-                  height: '10px',
+                  width: '8px',
+                  height: '8px',
                   borderRadius: '50%',
                   backgroundColor: isOffline ? 'var(--danger)' : 'var(--success)',
-                  boxShadow: isOffline ? '0 0 8px var(--danger)' : '0 0 8px var(--success)',
+                  color: isOffline ? 'var(--danger)' : 'var(--success)'
                 }}
               />
-              <span style={{ fontSize: '13px', fontWeight: '600', color: isOffline ? 'var(--danger)' : 'var(--success)' }}>
-                {isOffline ? 'OFFLINE MODE' : 'ONLINE'}
+              <span style={{ fontSize: '12px', fontWeight: '700', color: isOffline ? 'var(--danger)' : 'var(--success)', letterSpacing: '0.04em' }}>
+                {isOffline ? 'OFFLINE' : 'ONLINE'}
               </span>
             </div>
 
@@ -269,24 +377,61 @@ function App() {
             <button
               onClick={toggleNetwork}
               style={{
-                background: isOffline ? 'var(--success)' : 'var(--danger)',
-                color: 'var(--text-primary)',
-                border: 'none',
-                padding: '8px 14px',
-                borderRadius: '4px',
+                background: isOffline ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                color: isOffline ? 'var(--success)' : 'var(--danger)',
+                border: isOffline ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)',
+                padding: '9px 18px',
+                borderRadius: '999px',
                 fontSize: '12px',
                 fontWeight: '600',
                 cursor: 'pointer',
-                transition: 'background var(--transition-fast)',
+                transition: 'all var(--transition-fast)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = isOffline ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = isOffline ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+                e.currentTarget.style.transform = 'none';
               }}
             >
-              Simulasi {isOffline ? 'Hubungkan Internet' : 'Putuskan Internet'}
+              {isOffline ? 'Hubungkan Internet' : 'Putuskan Internet'}
+            </button>
+
+            {/* Theme Switcher Toggle */}
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              style={{
+                background: 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-color)',
+                padding: '9px 18px',
+                borderRadius: '999px',
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--bg-card-hover)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--bg-card)';
+                e.currentTarget.style.transform = 'none';
+              }}
+            >
+              {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
             </button>
           </div>
         </header>
 
         {/* Content body wrapper */}
-        <div style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
+        <div className="content-shell" style={{ flex: 1, padding: '42px', overflowY: 'auto' }}>
           {renderActivePage()}
         </div>
 

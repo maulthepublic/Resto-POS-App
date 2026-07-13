@@ -25,7 +25,7 @@ export async function seedDatabase() {
     // Use bulkPut (upsert) so re-runs never throw ConstraintError
     await db.users.bulkPut([
       {
-        id: 'usr-1',
+        id: '11111111-1111-4111-8111-111111111111',
         name: 'Budi (Owner)',
         email: 'owner@resto.com',
         role: 'owner' as const,
@@ -33,7 +33,7 @@ export async function seedDatabase() {
         updatedAt: new Date().toISOString(),
       },
       {
-        id: 'usr-2',
+        id: '22222222-2222-4222-8222-222222222222',
         name: 'Siti (Kasir)',
         email: 'cashier@resto.com',
         role: 'cashier' as const,
@@ -41,7 +41,7 @@ export async function seedDatabase() {
         updatedAt: new Date().toISOString(),
       },
       {
-        id: 'usr-3',
+        id: '33333333-3333-4333-8333-333333333333',
         name: 'Agus (Chef)',
         email: 'chef@resto.com',
         role: 'chef' as const,
@@ -49,7 +49,7 @@ export async function seedDatabase() {
         updatedAt: new Date().toISOString(),
       },
       {
-        id: 'usr-4',
+        id: '44444444-4444-4444-8444-444444444444',
         name: 'Rudi (Admin)',
         email: 'admin@resto.com',
         role: 'admin' as const,
@@ -58,6 +58,13 @@ export async function seedDatabase() {
       },
     ]);
 
+    await db.appSettings.bulkPut([
+      { key: 'pin:11111111-1111-4111-8111-111111111111', value: '1234' },
+      { key: 'pin:22222222-2222-4222-8222-222222222222', value: '1111' },
+      { key: 'pin:33333333-3333-4333-8333-333333333333', value: '2222' },
+      { key: 'pin:44444444-4444-4444-8444-444444444444', value: '3333' },
+      { key: 'deviceId', value: 'dev-resto-pos-tablet-01' },
+    ]);
     // PIN mappings stored in appSettings
     await db.appSettings.bulkPut([
       { key: 'pin:usr-1', value: '1234' }, // Owner PIN

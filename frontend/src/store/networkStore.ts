@@ -1,11 +1,18 @@
 import { create } from 'zustand';
 import { db, LocalSyncQueueItem } from '../db/localSchema';
+import { useAuthStore } from './authStore';
+
+// Maximum number of times a single mutation will be retried before it is
+// permanently marked 'failed' and excluded from future sync passes.
+// The item remains in IndexedDB for manual inspection / recovery.
+const MAX_RETRY = 5;
 
 interface NetworkState {
   isOffline: boolean;
   syncQueueCount: number;
   isSyncing: boolean;
   syncError: string | null;
+  hasNewMutationsDuringSync: boolean;
   toggleNetwork: () => void;
   updateSyncQueueCount: () => Promise<void>;
   enqueueMutation: (
@@ -22,6 +29,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
   syncQueueCount: 0,
   isSyncing: false,
   syncError: null,
+  hasNewMutationsDuringSync: false,
 
   toggleNetwork: () => {
     const nextState = !get().isOffline;
@@ -67,6 +75,10 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
       await db.syncQueue.add(queueItem);
       await get().updateSyncQueueCount();
 
+      if (get().isSyncing) {
+        set({ hasNewMutationsDuringSync: true });
+      }
+
       // If online, immediately try to sync
       if (!get().isOffline) {
         get().processSyncQueue();
@@ -79,26 +91,32 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
   processSyncQueue: async () => {
     if (get().isOffline || get().isSyncing) return;
 
-    const pendingItems = await db.syncQueue
-      .where('syncStatus')
-      .equals('pending')
-      .toArray();
+    const pendingItems = await db.syncQueue.where('syncStatus').equals('pending').toArray();
+    if (pendingItems.length === 0) return;
 
-    if (pendingItems.length === 0) {
-      return;
+    set({ isSyncing: true, syncError: null, hasNewMutationsDuringSync: false });
+
+    // Pastikan ada token sebelum push. Kalau belum ada, coba refresh dulu.
+    let token = useAuthStore.getState().authToken;
+    if (!token) {
+      const refreshed = await useAuthStore.getState().refreshAuthToken();
+      if (!refreshed) {
+        set({ isSyncing: false, syncError: 'Belum berhasil autentikasi ke server. Sinkronisasi ditunda.' });
+        return;
+      }
+      token = useAuthStore.getState().authToken;
     }
-
-    set({ isSyncing: true, syncError: null });
-    console.log(`[Sync Service] Found ${pendingItems.length} pending mutations. Attempting upload...`);
 
     try {
       const deviceIdSetting = await db.appSettings.get('deviceId');
       const deviceId = (deviceIdSetting?.value as string) || 'unknown-device';
 
-      // Call mock sync endpoint or actual endpoint if available
       const response = await fetch('/api/sync/push', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           deviceId,
           mutations: pendingItems.map((item) => ({
@@ -112,6 +130,14 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
         }),
       });
 
+      // Token basi atau invalid, jangan tandai item gagal permanen
+      if (response.status === 401) {
+        useAuthStore.setState({ authToken: null });
+        localStorage.removeItem('resto_pos_token');
+        set({ syncError: 'Sesi ke server berakhir, mencoba autentikasi ulang di sinkronisasi berikutnya.' });
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(`Sync server returned ${response.status} status.`);
       }
@@ -119,34 +145,55 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
       const data = await response.json();
 
       if (data.success && Array.isArray(data.results)) {
-        // Update local sync status based on results
-        for (const res of data.results) {
-          const matchingItem = pendingItems.find((i) => i.idempotencyKey === res.idempotencyKey);
-          if (matchingItem && matchingItem.localSequence !== undefined) {
-            if (res.status === 'synced') {
-              // Option A: Delete from queue
-              await db.syncQueue.delete(matchingItem.localSequence);
-            } else {
-              // Update retry count and error message
-              await db.syncQueue.update(matchingItem.localSequence, {
-                syncStatus: 'failed',
-                retryCount: matchingItem.retryCount + 1,
-                errorMessage: res.error || 'Server processing failed',
-              });
+        await db.transaction('rw', db.syncQueue, async () => {
+          for (const res of data.results) {
+            const matchingItem = pendingItems.find((i) => i.idempotencyKey === res.idempotencyKey);
+            if (matchingItem && matchingItem.localSequence !== undefined) {
+              if (res.status === 'synced' || res.status === 'skipped') {
+                // Item berhasil — hapus dari queue
+                await db.syncQueue.delete(matchingItem.localSequence);
+              } else {
+                // Item gagal — tentukan apakah masih bisa dicoba atau sudah melebihi batas.
+                const newRetryCount = matchingItem.retryCount + 1;
+                const isPermanentlyFailed = newRetryCount >= MAX_RETRY;
+
+                await db.syncQueue.update(matchingItem.localSequence, {
+                  // Bila batas retry tercapai: tandai 'failed' permanen sehingga tidak
+                  // ikut dalam batch sync berikutnya. Item tetap di IndexedDB untuk
+                  // ditinjau secara manual. Bila belum: biarkan 'pending' agar dicoba lagi.
+                  syncStatus: isPermanentlyFailed ? 'failed' : 'pending',
+                  retryCount: newRetryCount,
+                  lastTriedAt: new Date().toISOString(),
+                  errorMessage: res.error || 'Server processing failed',
+                });
+
+                if (isPermanentlyFailed) {
+                  console.warn(
+                    `[Sync] Item ${matchingItem.idempotencyKey} (${matchingItem.entityType}/${
+                      matchingItem.entityId
+                    }) ditandai gagal permanen setelah ${newRetryCount} percobaan.`,
+                    res.error
+                  );
+                }
+              }
             }
           }
-        }
+        });
       }
     } catch (err: any) {
-      console.warn('[Sync Service] Server sync failed (Network error or offline server). Storing in pending queue.');
+      console.warn('[Sync Service] Gagal menghubungi server.', err.message);
       set({ syncError: 'Gagal menghubungi server. Data aman dalam antrean lokal.' });
-      
-      // Fallback: Simulate sync success if we want a pure demo, 
-      // but let's keep it realistic and show them as "pending" or allow manual resolve.
-      // For testing, let's keep them in IndexedDB and print a message.
     } finally {
       set({ isSyncing: false });
       await get().updateSyncQueueCount();
+
+      // If new mutations were enqueued during this active sync, trigger another cycle immediately.
+      if (get().hasNewMutationsDuringSync && !get().isOffline) {
+        set({ hasNewMutationsDuringSync: false });
+        setTimeout(() => {
+          get().processSyncQueue();
+        }, 0);
+      }
     }
   },
 }));

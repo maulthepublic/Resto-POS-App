@@ -132,12 +132,13 @@ export function MenuResep() {
   // Delete Raw Material
   const handleDeleteIngred = async (id: string) => {
     if (confirm('Hapus bahan baku ini?')) {
-      await db.rawMaterials.delete(id);
       // Delete any associated recipe components
       const links = await db.recipes.where('rawMaterialId').equals(id).toArray();
       for (const l of links) {
         await db.recipes.delete(l.id);
+        await enqueueMutation('recipe', l.id, 'delete', {});
       }
+      await db.rawMaterials.delete(id);
       await enqueueMutation('rawMaterial', id, 'delete', {});
     }
   };
@@ -145,12 +146,13 @@ export function MenuResep() {
   // Delete Menu Item
   const handleDeleteMenu = async (id: string) => {
     if (confirm('Hapus menu ini?')) {
-      await db.menuItems.delete(id);
       // Delete associated recipes
       const links = await db.recipes.where('menuItemId').equals(id).toArray();
       for (const l of links) {
         await db.recipes.delete(l.id);
+        await enqueueMutation('recipe', l.id, 'delete', {});
       }
+      await db.menuItems.delete(id);
       await enqueueMutation('menuItem', id, 'delete', {});
     }
   };
@@ -167,17 +169,23 @@ export function MenuResep() {
         .equals([recipeMenuId, recipeMaterialId])
         .first();
 
+      const recipeData = {
+        menuItemId: recipeMenuId,
+        rawMaterialId: recipeMaterialId,
+        quantity: Number(recipeQty),
+      };
+
       if (existing) {
+        const updatedData = { id: existing.id, ...recipeData };
         await db.recipes.update(existing.id, {
           quantity: Number(recipeQty),
         });
+        await enqueueMutation('recipe', existing.id, 'update', updatedData);
       } else {
-        await db.recipes.add({
-          id: `rec-${Date.now()}`,
-          menuItemId: recipeMenuId,
-          rawMaterialId: recipeMaterialId,
-          quantity: Number(recipeQty),
-        });
+        const id = `rec-${Date.now()}`;
+        const newData = { id, ...recipeData };
+        await db.recipes.add(newData);
+        await enqueueMutation('recipe', id, 'insert', newData);
       }
 
       setShowRecipeForm(false);
@@ -192,6 +200,7 @@ export function MenuResep() {
   const handleDeleteRecipeLink = async (id: string) => {
     if (confirm('Hapus item komposisi resep ini?')) {
       await db.recipes.delete(id);
+      await enqueueMutation('recipe', id, 'delete', {});
     }
   };
 
@@ -217,7 +226,7 @@ export function MenuResep() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="page-shell page-menu-resep" style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
       
       {/* Sub tabs */}
       <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>

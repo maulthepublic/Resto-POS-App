@@ -40,120 +40,189 @@ export function Kds() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="page-shell page-kds" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+      
       <div>
-        <h3>Monitor Dapur (Kitchen Display System)</h3>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+        <div className="badge-eyebrow" style={{ marginBottom: '8px' }}>KITCHEN OPERATIONS</div>
+        <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff' }}>Monitor Dapur (Kitchen Display System)</h3>
+        <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', marginTop: '4px' }}>
           Daftar antrean makanan dan minuman yang masuk ke dapur secara real-time.
         </p>
       </div>
 
       {activeOrders === undefined || activeOrders.length === 0 ? (
-        <div style={{ border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-lg)', height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+        <div style={{ 
+          border: '1px dashed rgba(255, 255, 255, 0.08)', 
+          borderRadius: 'var(--radius-lg)', 
+          height: '240px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          color: 'var(--text-secondary)',
+          fontSize: '13px',
+          background: 'rgba(255, 255, 255, 0.01)'
+        }}>
           Tidak ada antrean pesanan masak aktif saat ini.
         </div>
       ) : (
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '20px',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
+            gap: '24px',
             alignItems: 'start',
           }}
         >
           {activeOrders.map((order) => {
             const timeDiff = Math.round((Date.now() - new Date(order.paidAt).getTime()) / 60000);
             
+            // Choose border glow color based on status and time urgency
+            const isLate = timeDiff > 15;
+            let statusColor = 'rgba(255, 255, 255, 0.05)';
+            let accentGlow = 'none';
+            let buttonClass = 'btn-pill-primary';
+            let buttonText = '';
+            let buttonColor = 'var(--primary)';
+            let nextAction: 'cooking' | 'ready' | 'served' = 'cooking';
+
+            if (order.status === 'paid') {
+              statusColor = 'rgba(245, 158, 11, 0.25)'; // warning / orange
+              accentGlow = '0 0 16px rgba(245, 158, 11, 0.06)';
+              buttonColor = 'var(--warning)';
+              buttonText = 'Mulai Masak';
+              nextAction = 'cooking';
+            } else if (order.status === 'cooking') {
+              statusColor = 'rgba(99, 102, 241, 0.25)'; // primary / indigo
+              accentGlow = '0 0 16px rgba(99, 102, 241, 0.06)';
+              buttonColor = 'var(--primary)';
+              buttonText = 'Siap Sajikan';
+              nextAction = 'ready';
+            } else if (order.status === 'ready') {
+              statusColor = 'rgba(16, 185, 129, 0.25)'; // success / green
+              accentGlow = '0 0 16px rgba(16, 185, 129, 0.06)';
+              buttonColor = 'var(--success)';
+              buttonText = 'Selesai / Saji';
+              nextAction = 'served';
+            }
+
             return (
               <div
                 key={order.id}
+                className="bezel-outer"
                 style={{
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '16px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                  boxShadow: 'var(--shadow-sm)',
+                  padding: '6px',
+                  borderColor: statusColor,
+                  boxShadow: accentGlow,
                 }}
               >
-                {/* Header card */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-                  <div>
-                    <h4 style={{ color: 'var(--primary)' }}>{order.receiptNumber}</h4>
-                    <span style={{ fontSize: '12px', fontWeight: '600' }}>Meja: {order.tableNumber || '-'}</span>
-                  </div>
-                  <span style={{ fontSize: '11px', color: timeDiff > 15 ? 'var(--danger)' : 'var(--text-secondary)', fontWeight: '600' }}>
-                    🕒 {timeDiff} menit lalu
-                  </span>
-                </div>
-
-                {/* Items list */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '80px' }}>
-                  {order.items.map((item, i) => (
-                    <div key={i} style={{ fontSize: '13px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '600' }}>
-                        <span>{item.itemName}</span>
-                        <span>x{item.quantity}</span>
-                      </div>
-                      
-                      {/* Selected customizations */}
-                      {Array.isArray(item.selectedVariants) && item.selectedVariants.map((v: any) => (
-                        <div key={v.id} style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '8px' }}>
-                          ▪ {v.name}
-                        </div>
-                      ))}
-
-                      {Array.isArray(item.selectedModifiers) && item.selectedModifiers.map((m: any) => (
-                        <div key={m.id} style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '8px' }}>
-                          + {m.name}
-                        </div>
-                      ))}
-
-                      {item.kitchenNote && (
-                        <div style={{ fontSize: '11px', color: 'var(--warning)', fontWeight: '500', fontStyle: 'italic', marginLeft: '8px' }}>
-                          Note: {item.kitchenNote}
-                        </div>
-                      )}
+                <div
+                  className="bezel-inner"
+                  style={{
+                    padding: '20px',
+                    background: 'rgba(10, 16, 30, 0.45)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px',
+                  }}
+                >
+                  {/* Header card */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', paddingBottom: '12px' }}>
+                    <div>
+                      <h4 style={{ color: '#ffffff', fontSize: '16px', fontWeight: 700 }}>{order.receiptNumber}</h4>
+                      <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', marginTop: '2px', display: 'inline-block' }}>Meja: {order.tableNumber || '-'}</span>
                     </div>
-                  ))}
-                </div>
+                    <span style={{ 
+                      fontSize: '10px', 
+                      color: isLate ? 'var(--danger)' : 'var(--text-secondary)', 
+                      fontWeight: '700',
+                      background: isLate ? 'rgba(239, 68, 68, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+                      border: isLate ? '1px solid rgba(239, 68, 68, 0.15)' : '1px solid rgba(255, 255, 255, 0.05)',
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: isLate ? 'var(--danger)' : 'var(--text-secondary)' }} />
+                      {timeDiff} mnt lalu
+                    </span>
+                  </div>
 
-                {/* KDS actions */}
-                <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '4px' }}>
-                  {order.status === 'paid' && (
-                    <button
-                      onClick={() => handleUpdateStatus(order.id, 'cooking')}
-                      style={{ flex: 1, background: 'var(--warning)', color: '#222', border: 'none', padding: '8px', borderRadius: '4px', cursor: 'pointer', fontWeight: '600', fontSize: '12px' }}
-                    >
-                      Mulai Masak
-                    </button>
-                  )}
-                  {order.status === 'cooking' && (
-                    <button
-                      onClick={() => handleUpdateStatus(order.id, 'ready')}
-                      style={{ flex: 1, background: 'var(--primary)', color: 'var(--text-primary)', border: 'none', padding: '8px', borderRadius: '4px', cursor: 'pointer', fontWeight: '600', fontSize: '12px' }}
-                    >
-                      Siap Sajikan
-                    </button>
-                  )}
-                  {order.status === 'ready' && (
-                    <button
-                      onClick={() => handleUpdateStatus(order.id, 'served')}
-                      style={{ flex: 1, background: 'var(--success)', color: 'var(--text-primary)', border: 'none', padding: '8px', borderRadius: '4px', cursor: 'pointer', fontWeight: '600', fontSize: '12px' }}
-                    >
-                      Selesai / Saji
-                    </button>
-                  )}
-                </div>
+                  {/* Items list */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minHeight: '80px' }}>
+                    {order.items.map((item, i) => (
+                      <div key={i} style={{ fontSize: '13px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '600', color: '#ffffff' }}>
+                          <span>{item.itemName}</span>
+                          <span style={{ color: 'var(--primary-hover)' }}>x{item.quantity}</span>
+                        </div>
+                        
+                        {/* Selected customizations */}
+                        {Array.isArray(item.selectedVariants) && item.selectedVariants.map((v: any) => (
+                          <div key={v.id} style={{ fontSize: '10.5px', color: 'var(--text-secondary)', marginLeft: '8px', marginTop: '2px' }}>
+                            ▪ {v.name}
+                          </div>
+                        ))}
 
+                        {Array.isArray(item.selectedModifiers) && item.selectedModifiers.map((m: any) => (
+                          <div key={m.id} style={{ fontSize: '10.5px', color: 'var(--text-secondary)', marginLeft: '8px', marginTop: '2px' }}>
+                            + {m.name}
+                          </div>
+                        ))}
+
+                        {item.kitchenNote && (
+                          <div style={{ 
+                            fontSize: '11px', 
+                            color: 'var(--warning)', 
+                            fontWeight: '600', 
+                            fontStyle: 'italic', 
+                            marginLeft: '8px', 
+                            marginTop: '4px',
+                            background: 'rgba(245, 158, 11, 0.04)',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            borderLeft: '2px solid var(--warning)'
+                          }}>
+                            Note: {item.kitchenNote}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* KDS actions */}
+                  <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '16px', marginTop: '4px' }}>
+                    <button
+                      onClick={() => handleUpdateStatus(order.id, nextAction)}
+                      className={buttonClass}
+                      style={{ 
+                        width: '100%', 
+                        background: buttonColor,
+                        color: order.status === 'paid' ? '#000000' : '#ffffff',
+                        padding: '10px 16px', 
+                        fontSize: '12.5px',
+                        boxShadow: 'none',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-1.5px)';
+                        e.currentTarget.style.boxShadow = `0 6px 16px ${buttonColor}40`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'none';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      {buttonText}
+                      <span className="btn-icon-wrapper" style={{ background: 'rgba(255, 255, 255, 0.22)', color: order.status === 'paid' ? '#000000' : '#ffffff' }}>✓</span>
+                    </button>
+                  </div>
+
+                </div>
               </div>
             );
           })}
         </div>
       )}
-
     </div>
   );
 }
